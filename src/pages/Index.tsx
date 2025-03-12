@@ -6,6 +6,8 @@ import Conversation from '../components/Conversation';
 import ChatInterface from '../components/ChatInterface';
 import SidebarHeader from '../components/SidebarHeader';
 import TransitionWrapper from '../components/TransitionWrapper';
+import Dashboard from '../components/Dashboard';
+import AppointmentsCalendar from '../components/AppointmentsCalendar';
 
 // Filter out this specific phone number
 const FILTERED_PHONE_NUMBER = "605370542649440";
@@ -51,11 +53,11 @@ const Index = () => {
 
   // Display Dashboard or Calendar when selected
   if (showDashboard) {
-    return <ModalPlaceholder title="Dashboard" onClose={() => setShowDashboard(false)} />;
+    return <Dashboard onClose={() => setShowDashboard(false)} />;
   }
 
   if (showAppointmentsCalendar) {
-    return <ModalPlaceholder title="Calendar" onClose={() => setShowAppointmentsCalendar(false)} />;
+    return <AppointmentsCalendar onClose={() => setShowAppointmentsCalendar(false)} />;
   }
 
   return (

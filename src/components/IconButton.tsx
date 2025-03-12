@@ -1,11 +1,17 @@
-
 import React from 'react';
 import { cn } from "@/lib/utils";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface IconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'default' | 'primary' | 'danger' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
+  title?: string;
 }
 
 const IconButton: React.FC<IconButtonProps> = ({
@@ -13,6 +19,7 @@ const IconButton: React.FC<IconButtonProps> = ({
   variant = 'default',
   size = 'md',
   children,
+  title,
   ...props
 }) => {
   const baseClasses = "rounded-full flex items-center justify-center transition-all duration-200 focus:outline-none";
@@ -30,7 +37,7 @@ const IconButton: React.FC<IconButtonProps> = ({
     lg: "p-2.5"
   };
   
-  return (
+  const button = (
     <button
       className={cn(
         baseClasses,
@@ -43,6 +50,23 @@ const IconButton: React.FC<IconButtonProps> = ({
       {children}
     </button>
   );
+
+  if (title) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {button}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{title}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return button;
 };
 
 export default IconButton;

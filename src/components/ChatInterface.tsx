@@ -48,7 +48,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const sendMessageMutation = useMutation({
     mutationFn: ({ userId, message }: { userId: string, message: string }) => sendMessage(userId, message),
     onMutate: async (newMessage) => {
-      await queryClient.cancelQueries(['messages', selectedChat.id]);
+      await queryClient.cancelQueries({ queryKey: ['messages', selectedChat.id] });
       const previousMessages = queryClient.getQueryData(['messages', selectedChat.id]);
       
       const tempMessage = {
@@ -85,8 +85,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const deleteHistoryMutation = useMutation({
     mutationFn: deleteConversationHistory,
     onSuccess: () => {
-      queryClient.invalidateQueries(['messages', selectedChat.id]);
-      queryClient.invalidateQueries(['conversations']);
+      queryClient.invalidateQueries({ queryKey: ['messages', selectedChat.id] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
 
@@ -142,7 +142,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onShowDashboard={onShowDashboard}
         onShowCalendar={onShowCalendar}
         onDeleteHistory={handleDeleteHistory}
-        isDeleting={deleteHistoryMutation.isLoading}
+        isDeleting={deleteHistoryMutation.isPending}
       />
       
       <TransitionWrapper animation="fade" className="flex-1 overflow-y-auto px-4 py-6 chatbox-bg scrollbar-thin">
@@ -165,7 +165,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onSendMessage={handleSendMessage}
         onShowTemplates={onShowTemplateSender}
         onShowMediaSender={onShowMediaSender}
-        isLoading={sendMessageMutation.isLoading}
+        isLoading={sendMessageMutation.isPending}
       />
     </div>
   );
