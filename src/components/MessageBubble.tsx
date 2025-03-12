@@ -91,8 +91,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     <TransitionWrapper
       animation={isSent ? 'slide-left' : 'slide-right'}
       className={cn(
-        "max-w-[70%] p-3 mb-2",
-        isSent ? "ml-auto message-bubble-sent" : "mr-auto message-bubble-received"
+        "max-w-[70%] p-3 mb-2 backdrop-blur-sm",
+        isSent 
+          ? "ml-auto rounded-2xl rounded-br-none bg-whatsapp/10 text-foreground border border-whatsapp/20 shadow-lg" 
+          : "mr-auto rounded-2xl rounded-bl-none bg-secondary text-foreground shadow-md"
       )}
     >
       {preview ? (

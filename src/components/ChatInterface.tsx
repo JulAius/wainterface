@@ -7,6 +7,7 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import EmptyState from './EmptyState';
 import TransitionWrapper from './TransitionWrapper';
+import { useToast } from "@/hooks/use-toast";
 
 interface ChatInterfaceProps {
   selectedChat: any | null;
@@ -25,6 +26,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Query for messages
   const { data: messages = [] } = useQuery({
@@ -69,6 +71,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     },
     onError: (err, newMessage, context: any) => {
       queryClient.setQueryData(['messages', selectedChat.id], context.previousMessages);
+      toast({
+        title: "Message Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
     },
     onSuccess: (data, variables, context: any) => {
       queryClient.setQueryData(['messages', selectedChat.id], (old: any[] = []) => {
@@ -87,6 +94,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', selectedChat.id] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      toast({
+        title: "Conversation Cleared",
+        description: "All messages have been deleted successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete conversation history.",
+        variant: "destructive"
+      });
     }
   });
 
@@ -120,7 +138,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         await deleteHistoryMutation.mutateAsync(selectedChat.id);
       } catch (error) {
         console.error('Error deleting history:', error);
-        alert('Error deleting conversation history');
       }
     }
   };
