@@ -9,6 +9,8 @@ import TransitionWrapper from '../components/TransitionWrapper';
 import Dashboard from '../components/Dashboard';
 import AppointmentsCalendar from '../components/AppointmentsCalendar';
 import NewConversation from '../components/NewConversation';
+import MediaSender from '../components/MediaSender';
+import TemplateSender from '../components/TemplateSender';
 
 // Filter out this specific phone number
 const FILTERED_PHONE_NUMBER = "605370542649440";
@@ -100,10 +102,12 @@ const Index = () => {
 
       {/* Modals */}
       {showTemplateSender && (
-        <ModalPlaceholder 
-          title="Template Sender" 
-          onClose={() => setShowTemplateSender(false)} 
-        />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <TemplateSender 
+            selectedChat={selectedChat}
+            onClose={() => setShowTemplateSender(false)} 
+          />
+        </div>
       )}
 
       {showNewConversation && (
@@ -119,10 +123,12 @@ const Index = () => {
       )}
 
       {showMediaSender && (
-        <ModalPlaceholder 
-          title="Media Sender" 
-          onClose={() => setShowMediaSender(false)} 
-        />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <MediaSender 
+            selectedChat={selectedChat}
+            onClose={() => setShowMediaSender(false)} 
+          />
+        </div>
       )}
       
       {showDistributionList && (
