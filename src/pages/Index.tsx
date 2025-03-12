@@ -8,6 +8,7 @@ import SidebarHeader from '../components/SidebarHeader';
 import TransitionWrapper from '../components/TransitionWrapper';
 import Dashboard from '../components/Dashboard';
 import AppointmentsCalendar from '../components/AppointmentsCalendar';
+import NewConversation from '../components/NewConversation';
 
 // Filter out this specific phone number
 const FILTERED_PHONE_NUMBER = "605370542649440";
@@ -23,7 +24,7 @@ const Index = () => {
   const [showAppointmentsCalendar, setShowAppointmentsCalendar] = useState(false);
 
   // Fetch conversations
-  const { data: conversations = [] } = useQuery({
+  const { data: conversations = [], refetch } = useQuery({
     queryKey: ['conversations'],
     queryFn: getConversations,
     refetchInterval: 5000,
@@ -106,10 +107,15 @@ const Index = () => {
       )}
 
       {showNewConversation && (
-        <ModalPlaceholder 
-          title="New Conversation" 
-          onClose={() => setShowNewConversation(false)} 
-        />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <NewConversation 
+            onClose={() => setShowNewConversation(false)}
+            onSuccess={() => {
+              setShowNewConversation(false);
+              refetch();
+            }}
+          />
+        </div>
       )}
 
       {showMediaSender && (
