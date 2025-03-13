@@ -12,6 +12,7 @@ import AppointmentsCalendar from '../components/AppointmentsCalendar';
 import NewConversation from '../components/NewConversation';
 import MediaSender from '../components/MediaSender';
 import TemplateSender from '../components/TemplateSender';
+import DistributionListModal from '../components/DistributionListModal';
 import { Activity, AlertCircle } from 'lucide-react';
 
 // Filter out this specific phone number
@@ -86,19 +87,6 @@ const Index = () => {
         lastMessage: conv.lastMessage || 'No messages'
       }))
   });
-
-  // Mock modal components that we'd implement in a real app
-  const ModalPlaceholder = ({ title, onClose }: { title: string, onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="glass-morphism border border-white/10 rounded-xl p-6 max-w-md w-full shadow-neon">
-        <h2 className="text-xl font-medium mb-4">{title}</h2>
-        <p className="text-muted-foreground mb-6">This is a placeholder for the {title} component.</p>
-        <div className="flex justify-end">
-          <button className="bg-whatsapp text-white px-4 py-2 rounded-lg shadow-neon hover:bg-whatsapp-light" onClick={onClose}>Close</button>
-        </div>
-      </div>
-    </div>
-  );
 
   // Display Dashboard or Calendar when selected
   if (showDashboard) {
@@ -216,10 +204,9 @@ const Index = () => {
       )}
       
       {showDistributionList && (
-        <ModalPlaceholder 
-          title="Distribution Lists" 
-          onClose={() => setShowDistributionList(false)} 
-        />
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <DistributionListModal onClose={() => setShowDistributionList(false)} />
+        </div>
       )}
     </div>
   );
