@@ -9,6 +9,7 @@ interface ConversationProps {
   isOnline?: boolean;
   isSelected?: boolean;
   onClick: () => void;
+  lastMessage?: string;
 }
 
 const Conversation: React.FC<ConversationProps> = ({
@@ -17,29 +18,30 @@ const Conversation: React.FC<ConversationProps> = ({
   messageCount,
   isOnline = false,
   isSelected = false,
+  lastMessage,
   onClick
 }) => {
   return (
     <div
       onClick={onClick}
       className={cn(
-        "px-4 py-3 cursor-pointer transition-all duration-300 border-b border-white/5",
+        "px-4 py-3 cursor-pointer transition-all duration-300 border-b border-white/5 relative overflow-hidden",
         isSelected
-          ? "bg-accent/70 backdrop-blur-sm"
+          ? "bg-accent/70 backdrop-blur-sm after:absolute after:inset-0 after:bg-gradient-to-r after:from-whatsapp/20 after:to-transparent after:opacity-20 after:pointer-events-none"
           : "hover:bg-secondary/60 hover:backdrop-blur-sm"
       )}
     >
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-3 relative z-10">
         <div className="relative">
           <div className={cn(
             "w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground shadow-md transition-all duration-300",
-            isSelected ? "bg-whatsapp/20 text-foreground" : "bg-accent/50"
+            isSelected ? "bg-whatsapp/20 text-foreground glass-morphism" : "bg-accent/50"
           )}>
             <span>{id.substring(0, 2)}</span>
           </div>
           {isOnline && (
             <div className={cn(
-              "absolute bottom-0 right-0 w-3 h-3 bg-whatsapp rounded-full border-2 shadow-neon",
+              "absolute bottom-0 right-0 w-3 h-3 bg-whatsapp rounded-full border-2 shadow-neon animate-pulse",
               isSelected ? "border-accent" : "border-card"
             )}></div>
           )}
@@ -62,7 +64,7 @@ const Conversation: React.FC<ConversationProps> = ({
             "text-xs truncate",
             isSelected ? "text-foreground/70" : "text-muted-foreground"
           )}>
-            {`${messageCount} messages`}
+            {lastMessage ? lastMessage : `${messageCount} messages`}
           </p>
         </div>
       </div>
