@@ -289,7 +289,7 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
       const sortedAppointments = [...filteredAppointments].sort((a, b) => {
         const dateA = new Date(`${a.appointment_date}T${a.appointment_time}`);
         const dateB = new Date(`${b.appointment_date}T${b.appointment_time}`);
-        return dateB - dateA;
+        return dateB.getTime() - dateA.getTime();
       });
       
       return (
@@ -604,13 +604,13 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
               <div className="flex justify-between items-center">
                 <p className="text-muted-foreground text-sm">Taux de confirmation</p>
                 <span className="text-whatsapp font-medium">
-                  {Math.round((stats.scheduled / (stats.total || 1)) * 100)}%
+                  {Math.round((stats.scheduled / Math.max(1, stats.total)) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-border/50 h-2 rounded-full">
                 <div 
                   className="h-2 bg-whatsapp rounded-full" 
-                  style={{ width: `${(stats.scheduled / (stats.total || 1)) * 100}%` }}
+                  style={{ width: `${(stats.scheduled / Math.max(1, stats.total)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -619,13 +619,13 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
               <div className="flex justify-between items-center">
                 <p className="text-muted-foreground text-sm">Taux d'annulation</p>
                 <span className="text-destructive font-medium">
-                  {Math.round((stats.cancelled / (stats.total || 1)) * 100)}%
+                  {Math.round((stats.cancelled / Math.max(1, stats.total)) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-border/50 h-2 rounded-full">
                 <div 
                   className="h-2 bg-destructive rounded-full" 
-                  style={{ width: `${(stats.cancelled / (stats.total || 1)) * 100}%` }}
+                  style={{ width: `${(stats.cancelled / Math.max(1, stats.total)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -634,13 +634,13 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
               <div className="flex justify-between items-center">
                 <p className="text-muted-foreground text-sm">Taux de complétion</p>
                 <span className="text-sky-500 font-medium">
-                  {Math.round((stats.completed / (stats.total || 1)) * 100)}%
+                  {Math.round((stats.completed / Math.max(1, stats.total)) * 100)}%
                 </span>
               </div>
               <div className="w-full bg-border/50 h-2 rounded-full">
                 <div 
                   className="h-2 bg-sky-500 rounded-full" 
-                  style={{ width: `${(stats.completed / (stats.total || 1)) * 100}%` }}
+                  style={{ width: `${(stats.completed / Math.max(1, stats.total)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -674,7 +674,7 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
               <TableBody>
                 {appointments
                   .filter(apt => apt.status === 'confirmed' && new Date(`${apt.appointment_date}T${apt.appointment_time}`) >= new Date())
-                  .sort((a, b) => new Date(`${a.appointment_date}T${a.appointment_time}`) - new Date(`${b.appointment_date}T${b.appointment_time}`))
+                  .sort((a, b) => new Date(`${a.appointment_date}T${a.appointment_time}`).getTime() - new Date(`${b.appointment_date}T${b.appointment_time}`).getTime())
                   .slice(0, 5)
                   .map((appointment, index) => (
                   <TableRow key={index}>
