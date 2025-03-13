@@ -28,28 +28,47 @@ const Index = () => {
   const [showAppointmentsCalendar, setShowAppointmentsCalendar] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
-  // Check API health
+  // Check API health - updated to use proper React Query v5 syntax
   const { data: healthData, isError: healthError } = useQuery({
     queryKey: ['health'],
     queryFn: checkHealth,
     retry: 2,
     refetchInterval: 30000, // Check health every 30 seconds
-    onError: () => {
+    // Using onSuccess and onError via meta to match latest React Query API
+    meta: {
+      onSuccess: () => {
+        if (isOffline) {
+          setIsOffline(false);
+          toast.success("Connexion rétablie", {
+            description: "Le serveur est de nouveau accessible",
+          });
+        }
+      },
+      onError: () => {
+        setIsOffline(true);
+        toast.error("Impossible de se connecter au serveur", {
+          description: "Vérifiez votre connexion et réessayez",
+          icon: <AlertCircle className="h-5 w-5 text-destructive" />
+        });
+      }
+    }
+  });
+
+  // Handle health check responses manually since the meta approach may not be fully compatible
+  useEffect(() => {
+    if (healthError && !isOffline) {
       setIsOffline(true);
       toast.error("Impossible de se connecter au serveur", {
         description: "Vérifiez votre connexion et réessayez",
         icon: <AlertCircle className="h-5 w-5 text-destructive" />
       });
-    },
-    onSuccess: () => {
-      if (isOffline) {
-        setIsOffline(false);
-        toast.success("Connexion rétablie", {
-          description: "Le serveur est de nouveau accessible",
-        });
-      }
+    } else if (healthData && isOffline) {
+      setIsOffline(false);
+      toast.success("Connexion rétablie", {
+        description: "Le serveur est de nouveau accessible",
+      });
     }
-  });
+  }, [healthData, healthError, isOffline]);
 
   // Fetch conversations
   const { data: conversations = [], refetch, isLoading, isError } = useQuery({
