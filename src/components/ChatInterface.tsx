@@ -163,11 +163,15 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <TransitionWrapper animation="fade" className="flex-1 overflow-y-auto px-4 py-6 chatbox-bg scrollbar-thin">
         <div className="space-y-1 max-w-3xl mx-auto">
           {messagesLoading ? (
-            <div className="flex justify-center p-4">
-              <div className="animate-spin h-8 w-8 border-4 border-whatsapp border-opacity-50 border-t-whatsapp rounded-full"></div>
+            <div className="flex justify-center items-center h-40">
+              <div className="typing-indicator">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           ) : messages.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground">
+            <div className="text-center p-8 text-muted-foreground glass-morphism rounded-xl animate-floating">
               <p>Aucun message. Démarrez la conversation !</p>
             </div>
           ) : (
