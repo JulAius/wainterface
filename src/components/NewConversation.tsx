@@ -1,10 +1,23 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Send, AlertCircle, Phone } from 'lucide-react';
+import { getTemplates, sendTemplateMessage } from '../services/api';
 
 interface NewConversationProps {
   onClose: () => void;
   onSuccess?: () => void;
+}
+
+interface TemplateVariable {
+  name: string;
+  label: string;
+  type: string;
+}
+
+interface Template {
+  name: string;
+  displayName: string;
+  variables: TemplateVariable[];
 }
 
 const NewConversation: React.FC<NewConversationProps> = ({ onClose, onSuccess }) => {
@@ -13,39 +26,59 @@ const NewConversation: React.FC<NewConversationProps> = ({ onClose, onSuccess })
   const [variables, setVariables] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
   
-  const templates = [
-    {
-      name: "informationcroisieres",
-      displayName: "Information Croisières",
-      variables: [
-        { name: "name", label: "Nom du client", type: "text" },
-        { name: "ship", label: "Nom du bateau", type: "text" },
-        { name: "date", label: "Date de départ", type: "text" }
-      ]
-    },
-    {
-      name: "welcome",
-      displayName: "Message de bienvenue",
-      variables: [
-        { name: "customerName", label: "Nom du client", type: "text" }
-      ]
-    },
-    {
-      name: "nouveau_prix",
-      displayName: "nouveau_prix",
-      variables: [
-        { name: "clientName", label: "Nom du client", type: "text" },
-        { name: "quoteDate", label: "Date du premier devis", type: "text" },
-        { name: "portDepart", label: "Port de départ", type: "text" },
-        { name: "shipName", label: "Nom du bateau", type: "text" },
-        { name: "prixInitial", label: "Prix initial", type: "text" },
-        { name: "nouveauPrix", label: "Nouveau prix", type: "text" },
-        { name: "pourcentageReduction", label: "Pourcentage de réduction", type: "text" },
-        { name: "liencroisiere", label: "lien vers la croisiere", type: "text" }
-      ]
-    }
-  ];
+  // Fetch templates from the API
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        setLoadingTemplates(true);
+        const templatesData = await getTemplates();
+        setTemplates(templatesData);
+      } catch (err) {
+        console.error('Error fetching templates:', err);
+        setError('Erreur lors du chargement des templates');
+        // Set default templates as fallback
+        setTemplates([
+          {
+            name: "informationcroisieres",
+            displayName: "Information Croisières",
+            variables: [
+              { name: "name", label: "Nom du client", type: "text" },
+              { name: "ship", label: "Nom du bateau", type: "text" },
+              { name: "date", label: "Date de départ", type: "text" }
+            ]
+          },
+          {
+            name: "welcome",
+            displayName: "Message de bienvenue",
+            variables: [
+              { name: "customerName", label: "Nom du client", type: "text" }
+            ]
+          },
+          {
+            name: "nouveau_prix",
+            displayName: "Changement de Prix",
+            variables: [
+              { name: "clientName", label: "Nom du client", type: "text" },
+              { name: "quoteDate", label: "Date du premier devis", type: "text" },
+              { name: "portDepart", label: "Port de départ", type: "text" },
+              { name: "shipName", label: "Nom du bateau", type: "text" },
+              { name: "prixInitial", label: "Prix initial", type: "text" },
+              { name: "nouveauPrix", label: "Nouveau prix", type: "text" },
+              { name: "pourcentageReduction", label: "Pourcentage de réduction", type: "text" },
+              { name: "liencroisiere", label: "lien vers la croisiere", type: "text" }
+            ]
+          }
+        ]);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+
+    fetchTemplates();
+  }, []);
 
   const handleTemplateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const templateName = e.target.value;
@@ -91,23 +124,8 @@ const NewConversation: React.FC<NewConversationProps> = ({ onClose, onSuccess })
     try {
       const formattedNumber = formatPhoneNumber(phoneNumber);
       
-      const response = await fetch('/api/templates/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        // Le payload envoie le nom du template sélectionné, le numéro formaté et un objet regroupant toutes les variables.
-        body: JSON.stringify({
-          templateName: selectedTemplate,
-          recipient: formattedNumber,
-          variables: variables
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Échec de l'envoi du template");
-      }
-
+      await sendTemplateMessage(selectedTemplate, formattedNumber, variables);
+      
       onSuccess?.();
       onClose();
     } catch (err) {
@@ -146,18 +164,25 @@ const NewConversation: React.FC<NewConversationProps> = ({ onClose, onSuccess })
 
         {/* Sélection du template */}
         <div>
-          <select
-            value={selectedTemplate}
-            onChange={handleTemplateChange}
-            className="w-full p-3 bg-[#2a3942] text-white border border-gray-700/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          >
-            <option value="">Choisir un template</option>
-            {templates.map(template => (
-              <option key={template.name} value={template.name}>
-                {template.displayName}
-              </option>
-            ))}
-          </select>
+          {loadingTemplates ? (
+            <div className="w-full p-3 bg-[#2a3942] border border-gray-700/30 rounded-lg flex items-center justify-center">
+              <div className="animate-spin h-5 w-5 border-2 border-white border-opacity-20 border-t-white rounded-full mr-2"></div>
+              <span className="text-gray-400">Chargement des templates...</span>
+            </div>
+          ) : (
+            <select
+              value={selectedTemplate}
+              onChange={handleTemplateChange}
+              className="w-full p-3 bg-[#2a3942] text-white border border-gray-700/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              <option value="">Choisir un template</option>
+              {templates.map(template => (
+                <option key={template.name} value={template.name}>
+                  {template.displayName}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         {/* Affichage dynamique des champs de variables */}

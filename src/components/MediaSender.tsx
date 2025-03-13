@@ -1,6 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Upload, X, Send, Image, FileText, Music } from 'lucide-react';
+import { uploadMedia, sendMediaMessage } from '../services/api';
 
 interface MediaSenderProps {
   selectedChat: any;
@@ -23,11 +24,23 @@ const MediaSender: React.FC<MediaSenderProps> = ({ selectedChat, onClose }) => {
 
   const validateFile = useCallback((file: File, mediaType: string) => {
     const mediaTypeConfig = mediaTypes.find(type => type.id === mediaType);
-    if (!mediaTypeConfig) return;
+    if (!mediaTypeConfig) throw new Error("Type de média non valide");
     
     const maxSize = mediaTypeConfig.maxSize * 1024 * 1024;
+    const acceptTypes = mediaTypeConfig.accept.split(',');
+    
+    let isValidType = false;
+    
+    if (mediaType === 'document') {
+      // For documents, check the file extension
+      const fileExtension = '.' + file.name.split('.').pop()?.toLowerCase();
+      isValidType = acceptTypes.some(type => type === fileExtension);
+    } else {
+      // For media files, check the mime type
+      isValidType = acceptTypes.some(type => file.type.match(type));
+    }
 
-    if (!file.type.match(mediaTypeConfig.accept.split(',').join('|'))) {
+    if (!isValidType) {
       throw new Error(`Format de fichier non supporté. Formats acceptés: ${mediaTypeConfig.accept}`);
     }
 
@@ -45,8 +58,8 @@ const MediaSender: React.FC<MediaSenderProps> = ({ selectedChat, onClose }) => {
     try {
       validateFile(selectedFile, mediaType);
       setFile(selectedFile);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur lors de la validation du fichier");
       e.target.value = '';
     }
   };
@@ -59,40 +72,39 @@ const MediaSender: React.FC<MediaSenderProps> = ({ selectedChat, onClose }) => {
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('type', mediaType);
+      // Simulate progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return prev;
+          }
+          return prev + 10;
+        });
+      }, 500);
 
-      const uploadResponse = await fetch('/api/media/upload', {
-        method: 'POST',
-        body: formData
-      });
+      // Upload the media file
+      const uploadResult = await uploadMedia(file, mediaType);
+      
+      // Send the media message
+      await sendMediaMessage(
+        selectedChat.id,
+        mediaType,
+        uploadResult.mediaId,
+        caption,
+        file.name
+      );
 
-      if (!uploadResponse.ok) {
-        throw new Error(await uploadResponse.text() || "Échec de l'upload");
-      }
+      // Set progress to 100%
+      setUploadProgress(100);
+      clearInterval(progressInterval);
 
-      const { mediaId } = await uploadResponse.json();
-
-      const sendResponse = await fetch('/api/media/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipientId: selectedChat.id,
-          mediaType,
-          mediaId,
-          caption,
-          filename: file.name
-        })
-      });
-
-      if (!sendResponse.ok) {
-        throw new Error("Échec de l'envoi");
-      }
-
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
+      // Close the modal after a short delay
+      setTimeout(() => {
+        onClose();
+      }, 500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Échec de l'envoi du média");
       setUploadProgress(0);
     } finally {
       setLoading(false);
@@ -186,11 +198,17 @@ const MediaSender: React.FC<MediaSenderProps> = ({ selectedChat, onClose }) => {
         )}
 
         {loading && uploadProgress > 0 && (
-          <div className="w-full bg-gray-700 rounded-full h-2">
-            <div
-              className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${uploadProgress}%` }}
-            />
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-gray-400">
+              <span>Progression</span>
+              <span>{uploadProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-emerald-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
           </div>
         )}
       </div>

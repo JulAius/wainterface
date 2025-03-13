@@ -29,7 +29,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const { toast } = useToast();
   
   // Query for messages
-  const { data: messages = [] } = useQuery({
+  const { data: messages = [], isLoading: messagesLoading } = useQuery({
     queryKey: ['messages', selectedChat?.id],
     queryFn: () => getMessages(selectedChat.id),
     enabled: !!selectedChat,
@@ -37,12 +37,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     select: (data) => data.map((msg: any) => ({
       ...msg,
       timestamp: new Date(msg.timestamp),
-      preview: msg.mediaId ? {
-        type: msg.type,
-        id: msg.mediaId,
-        caption: msg.caption,
-        mime_type: msg.mimeType
-      } : null
+      preview: msg.preview || null
     }))
   });
 
@@ -54,11 +49,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const previousMessages = queryClient.getQueryData(['messages', selectedChat.id]);
       
       const tempMessage = {
+        messageId: `temp-${Date.now()}`,
         content: newMessage.message,
         sender: 'bot',
         timestamp: new Date(),
         status: { sent: true, delivered: false, read: false, failed: false, timestamp: null },
-        messageId: `temp-${Date.now()}`,
         preview: null,
       };
       
@@ -85,6 +80,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             : msg
         );
       });
+      
+      // After successful message, also update the conversation list
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
 
@@ -164,16 +162,26 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       <TransitionWrapper animation="fade" className="flex-1 overflow-y-auto px-4 py-6 chatbox-bg scrollbar-thin">
         <div className="space-y-1 max-w-3xl mx-auto">
-          {messages.map((msg: any, index: number) => (
-            <MessageBubble
-              key={msg.messageId || index}
-              content={msg.content}
-              sender={msg.sender === 'user' ? 'user' : 'bot'}
-              timestamp={new Date(msg.timestamp)}
-              status={msg.status}
-              preview={msg.preview}
-            />
-          ))}
+          {messagesLoading ? (
+            <div className="flex justify-center p-4">
+              <div className="animate-spin h-8 w-8 border-4 border-whatsapp border-opacity-50 border-t-whatsapp rounded-full"></div>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="text-center p-8 text-muted-foreground">
+              <p>Aucun message. Démarrez la conversation !</p>
+            </div>
+          ) : (
+            messages.map((msg: any, index: number) => (
+              <MessageBubble
+                key={msg.messageId || index}
+                content={msg.content}
+                sender={msg.sender === 'user' ? 'user' : 'bot'}
+                timestamp={new Date(msg.timestamp)}
+                status={msg.status}
+                preview={msg.preview}
+              />
+            ))
+          )}
           <div ref={messagesEndRef} />
         </div>
       </TransitionWrapper>
