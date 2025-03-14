@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
 import TransitionWrapper from './TransitionWrapper';
-import { Check, CheckCheck, Clock, XCircle, Image, File, Video } from 'lucide-react';
+import { Check, CheckCheck, Clock, XCircle } from 'lucide-react';
 
 interface MessageStatus {
   sent: boolean;
@@ -19,15 +19,11 @@ interface MessagePreviewProps {
 }
 
 interface MessageBubbleProps {
-  message: string;
-  sender: 'me' | 'them' | 'user' | 'bot';
-  timestamp: Date | string;
-  status?: string;
-  read?: boolean;
-  type?: string;
-  mediaUrl?: string;
-  filename?: string;
-  caption?: string;
+  content: string;
+  sender: 'user' | 'bot';
+  timestamp: Date;
+  status?: MessageStatus;
+  preview?: MessagePreviewProps | null;
 }
 
 const StatusIndicator: React.FC<{ status: MessageStatus }> = ({ status }) => {
@@ -49,6 +45,7 @@ const StatusIndicator: React.FC<{ status: MessageStatus }> = ({ status }) => {
 const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview }) => {
   const [isLoading, setIsLoading] = useState(true);
   
+  // Simulate image loading
   React.useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
@@ -56,7 +53,7 @@ const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview })
 
   if (isLoading) {
     return (
-      <div className="w-full h-40 bg-accent/50 animate-pulse rounded-lg"></div>
+      <div className="w-full h-40 bg-accent/50 animate-pulse rounded-lg backdrop-blur-sm"></div>
     );
   }
 
@@ -64,116 +61,54 @@ const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview })
     <div className="space-y-2">
       <div className="rounded-lg overflow-hidden">
         {preview.type.includes('image') ? (
-          <div className="bg-accent/30 rounded-lg w-full h-40 flex items-center justify-center">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm">
-              <Image className="w-4 h-4" />
-              <span className="text-sm">Image</span>
-            </div>
+          <div className="bg-accent/50 backdrop-blur-sm rounded-lg w-full h-40 flex items-center justify-center shadow-inner">
+            <div className="text-sm text-foreground/80 glass-morphism px-3 py-1 rounded-full">Image Preview</div>
           </div>
         ) : preview.type.includes('video') ? (
-          <div className="bg-accent/30 rounded-lg w-full h-40 flex items-center justify-center">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm">
-              <Video className="w-4 h-4" />
-              <span className="text-sm">Video</span>
-            </div>
+          <div className="bg-accent/50 backdrop-blur-sm rounded-lg w-full h-40 flex items-center justify-center shadow-inner">
+            <div className="text-sm text-foreground/80 glass-morphism px-3 py-1 rounded-full">Video Preview</div>
           </div>
         ) : (
-          <div className="bg-accent/30 rounded-lg w-full py-6 flex items-center justify-center">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-black/20 backdrop-blur-sm">
-              <File className="w-4 h-4" />
-              <span className="text-sm">{preview.id}</span>
-            </div>
+          <div className="bg-accent/50 backdrop-blur-sm rounded-lg w-full py-6 flex items-center justify-center shadow-inner">
+            <div className="text-sm text-foreground/80 glass-morphism px-3 py-1 rounded-full">File: {preview.id}</div>
           </div>
         )}
       </div>
-      {preview.caption && <p className="text-sm whitespace-pre-wrap break-words">{preview.caption}</p>}
+      {preview.caption && <p className="text-sm">{preview.caption}</p>}
     </div>
   );
 };
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
-  message,
+  content,
   sender,
   timestamp,
   status,
-  read,
-  type,
-  mediaUrl,
-  filename,
-  caption
+  preview
 }) => {
-  // Normalize sender type
-  const normalizedSender = sender === 'me' || sender === 'user' ? 'user' : 'bot';
-  
-  // Determine if message is from user or bot
-  const isFromUser = normalizedSender === 'user';
-  
-  const preview = type ? {
-    type,
-    id: filename || mediaUrl || 'unknown',
-    caption
-  } : null;
-  
-  const timeObj = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
-
-  // Configure message status
-  const messageStatus: MessageStatus = {
-    sent: status === 'sent' || status === 'delivered' || status === 'read',
-    delivered: status === 'delivered' || status === 'read',
-    read: status === 'read' || !!read,
-    failed: status === 'failed',
-    timestamp: timeObj
-  };
+  const isSent = sender === 'bot';
   
   return (
     <TransitionWrapper
-      animation={isFromUser ? 'slide-left' : 'slide-right'}
+      animation={isSent ? 'slide-left' : 'slide-right'}
       className={cn(
-        "relative max-w-[75%] mb-3 group",
-        isFromUser ? "ml-auto" : "mr-auto"
+        "max-w-[70%] p-3 mb-2",
+        isSent 
+          ? "ml-auto message-bubble-sent" 
+          : "mr-auto message-bubble-received"
       )}
     >
-      <div 
-        className={cn(
-          "px-3 py-2 rounded-xl shadow-sm",
-          isFromUser 
-            ? "bg-whatsapp/90 text-background border border-whatsapp/30 rounded-br-none" 
-            : "bg-card/90 text-foreground border border-white/10 rounded-bl-none"
-        )}
-      >
-        {preview ? (
-          <PreviewContent preview={preview} />
-        ) : (
-          <div className="message-content">
-            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">{message}</p>
-          </div>
-        )}
-        
-        <div className="flex items-center justify-end mt-1 space-x-1 opacity-80">
-          <span className="text-[10px]">
-            {timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          {isFromUser && (
-            <StatusIndicator status={messageStatus} />
-          )}
-        </div>
-      </div>
+      {preview ? (
+        <PreviewContent preview={preview} />
+      ) : (
+        <p className="break-words text-sm leading-relaxed">{content}</p>
+      )}
       
-      {/* Bubble tail */}
-      <div 
-        className={cn(
-          "absolute bottom-0 w-3 h-4 overflow-hidden",
-          isFromUser ? "-right-2" : "-left-2"
-        )}
-      >
-        <div 
-          className={cn(
-            "absolute w-4 h-4 transform rotate-45 top-0",
-            isFromUser 
-              ? "bg-whatsapp/90 border-b border-r border-whatsapp/30 -translate-x-1/2" 
-              : "bg-card/90 border-b border-l border-white/10 translate-x-1/2"
-          )}
-        />
+      <div className="flex items-center justify-end mt-1 space-x-1">
+        <span className="text-xs text-muted-foreground/80">
+          {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+        {isSent && status && <StatusIndicator status={status} />}
       </div>
     </TransitionWrapper>
   );

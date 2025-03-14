@@ -5,49 +5,24 @@ import IconButton from './IconButton';
 import TransitionWrapper from './TransitionWrapper';
 
 interface MessageInputProps {
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSend?: () => void;
-  onSendMessage?: (message: string) => void;
-  onShowTemplates?: () => void;
-  onShowMediaSender?: () => void;
+  onSendMessage: (message: string) => void;
+  onShowTemplates: () => void;
+  onShowMediaSender: () => void;
   isLoading?: boolean;
-  placeholder?: string;
-  disabled?: boolean;
 }
 
 const MessageInput: React.FC<MessageInputProps> = ({
-  value = '',
-  onChange,
-  onSend,
   onSendMessage,
   onShowTemplates,
   onShowMediaSender,
   isLoading = false,
-  placeholder = 'Message',
-  disabled = false,
 }) => {
-  const [localMessage, setLocalMessage] = useState('');
-  
-  // Use either the controlled message or the local state
-  const message = onChange ? value : localMessage;
-  
-  const handleLocalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalMessage(e.target.value);
-  };
+  const [message, setMessage] = useState('');
 
   const handleSend = () => {
     if (!message.trim()) return;
-    
-    if (onSendMessage) {
-      onSendMessage(message);
-    } else if (onSend) {
-      onSend();
-    }
-    
-    if (!onChange) {
-      setLocalMessage('');
-    }
+    onSendMessage(message);
+    setMessage('');
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -75,10 +50,9 @@ const MessageInput: React.FC<MessageInputProps> = ({
           <input
             type="text"
             value={message}
-            onChange={onChange || handleLocalChange}
+            onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder={placeholder}
-            disabled={disabled}
+            placeholder="Message"
             className="w-full py-2.5 px-4 bg-secondary/50 backdrop-blur-sm text-foreground placeholder-muted-foreground/70 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-whatsapp/30 transition-all border border-white/5"
           />
         </div>
@@ -86,7 +60,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
         {message ? (
           <IconButton 
             onClick={handleSend}
-            disabled={isLoading || disabled}
+            disabled={isLoading}
             variant="primary"
             title="Send Message"
           >
@@ -97,7 +71,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             )}
           </IconButton>
         ) : (
-          <IconButton title="Voice Message" disabled={disabled}>
+          <IconButton title="Voice Message">
             <Mic className="w-5 h-5" />
           </IconButton>
         )}
