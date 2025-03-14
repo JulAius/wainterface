@@ -2,7 +2,6 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
 import TransitionWrapper from './TransitionWrapper';
-import { Button } from './ui/button';
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -11,8 +10,8 @@ interface EmptyStateProps {
   action: () => void;
   actionLabel: string;
   actionIcon: LucideIcon;
-  onShowDashboard?: () => void;
-  onShowCalendar?: () => void;
+  onShowDashboard: () => void;
+  onShowCalendar: () => void;
 }
 
 const EmptyState: React.FC<EmptyStateProps> = ({
@@ -40,24 +39,21 @@ const EmptyState: React.FC<EmptyStateProps> = ({
       </p>
       
       <div className="flex space-x-4">
-        <Button
+        <button
           onClick={action}
-          className="flex items-center"
+          className="primary-button flex items-center"
         >
           <ActionIcon className="w-4 h-4 mr-2" />
           {actionLabel}
-        </Button>
+        </button>
         
-        {onShowCalendar && (
-          <Button
-            onClick={onShowCalendar}
-            variant="secondary"
-            className="flex items-center"
-          >
-            <ActionIcon className="w-4 h-4 mr-2" />
-            View Calendar
-          </Button>
-        )}
+        <button
+          onClick={onShowCalendar}
+          className="secondary-button flex items-center"
+        >
+          <ActionIcon className="w-4 h-4 mr-2" />
+          View Calendar
+        </button>
       </div>
     </TransitionWrapper>
   );
