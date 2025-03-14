@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface TransitionWrapperProps {
   children: React.ReactNode;
   className?: string;
-  animation?: 'fade' | 'fade-in' | 'scale' | 'slide-right' | 'slide-left' | 'slide-bottom';
+  animation?: 'fade' | 'scale' | 'slide-right' | 'slide-left' | 'slide-bottom';
   duration?: 'fast' | 'normal' | 'slow';
   delay?: 'none' | 'short' | 'medium' | 'long';
 }
@@ -19,19 +19,12 @@ const TransitionWrapper: React.FC<TransitionWrapperProps> = ({
 }) => {
   const getAnimationClass = () => {
     switch (animation) {
-      case 'fade':
-      case 'fade-in': 
-        return 'animate-fade-in';
-      case 'scale': 
-        return 'animate-scale-in';
-      case 'slide-right': 
-        return 'animate-slide-in-right';
-      case 'slide-left': 
-        return 'animate-slide-in-left';
-      case 'slide-bottom': 
-        return 'animate-slide-in-bottom';
-      default: 
-        return 'animate-fade-in';
+      case 'fade': return 'animate-fade-in';
+      case 'scale': return 'animate-scale-in';
+      case 'slide-right': return 'animate-slide-in-right';
+      case 'slide-left': return 'animate-slide-in-left';
+      case 'slide-bottom': return 'animate-slide-in-bottom';
+      default: return 'animate-fade-in';
     }
   };
 

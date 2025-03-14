@@ -13,8 +13,7 @@ import NewConversation from '../components/NewConversation';
 import MediaSender from '../components/MediaSender';
 import TemplateSender from '../components/TemplateSender';
 import DistributionListModal from '../components/DistributionListModal';
-import ClientInfoPanel from '../components/ClientInfoPanel';
-import { Activity, AlertCircle, User } from 'lucide-react';
+import { Activity, AlertCircle } from 'lucide-react';
 
 // Filter out this specific phone number
 const FILTERED_PHONE_NUMBER = "605370542649440";
@@ -29,7 +28,6 @@ const Index = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showAppointmentsCalendar, setShowAppointmentsCalendar] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
-  const [showClientInfo, setShowClientInfo] = useState(false);
 
   // Check API health - updated to use proper React Query v5 syntax
   const { data: healthData, isError: healthError } = useQuery({
@@ -171,17 +169,8 @@ const Index = () => {
           onShowMediaSender={() => setShowMediaSender(true)}
           onShowDashboard={() => setShowDashboard(true)}
           onShowCalendar={() => setShowAppointmentsCalendar(true)}
-          onToggleClientInfo={() => setShowClientInfo(!showClientInfo)}
         />
       </div>
-
-      {/* Client Info Panel */}
-      {showClientInfo && selectedChat && (
-        <ClientInfoPanel 
-          selectedChat={selectedChat} 
-          onClose={() => setShowClientInfo(false)} 
-        />
-      )}
 
       {/* Modals */}
       {showTemplateSender && (
