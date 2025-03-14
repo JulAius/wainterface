@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
 import TransitionWrapper from './TransitionWrapper';
@@ -92,8 +93,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   filename,
   caption
 }) => {
+  // Normaliser le type d'expéditeur pour être compatible avec les types existants
   const normalizedSender = sender === 'me' || sender === 'user' ? 'user' : 'bot';
   
+  // Déterminer si le message est envoyé par l'utilisateur
   const isSent = normalizedSender === 'user';
   
   const preview = type ? {
@@ -103,34 +106,40 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   } : null;
   
   const timeObj = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
+
+  // Configuration du statut pour l'indicateur
+  const messageStatus: MessageStatus = {
+    sent: status === 'sent' || status === 'delivered' || status === 'read',
+    delivered: status === 'delivered' || status === 'read',
+    read: status === 'read' || !!read,
+    failed: status === 'failed',
+    timestamp: timeObj
+  };
   
   return (
     <TransitionWrapper
       animation={isSent ? 'slide-left' : 'slide-right'}
       className={cn(
-        "max-w-[70%] p-3 mb-2",
+        "max-w-[70%] rounded-2xl p-3 mb-2",
         isSent 
-          ? "ml-auto message-bubble-sent" 
-          : "mr-auto message-bubble-received"
+          ? "ml-auto bg-whatsapp-glass backdrop-blur-sm border border-whatsapp/10 shadow-sm" 
+          : "mr-auto bg-secondary/60 backdrop-blur-sm border border-white/5 shadow-sm"
       )}
     >
       {preview ? (
         <PreviewContent preview={preview} />
       ) : (
-        <p className="break-words text-sm leading-relaxed">{message}</p>
+        <div className="message-content">
+          <p className="text-sm leading-relaxed text-foreground break-words whitespace-pre-wrap">{message}</p>
+        </div>
       )}
       
       <div className="flex items-center justify-end mt-1 space-x-1">
-        <span className="text-xs text-muted-foreground/80">
+        <span className="text-[10px] opacity-70">
           {timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
-        {isSent && status && (
-          <span className="text-xs text-muted-foreground/80">
-            {status}
-          </span>
-        )}
-        {isSent && read !== undefined && (
-          read ? <CheckCheck className="w-3.5 h-3.5 text-whatsapp" /> : <Check className="w-3.5 h-3.5 text-muted-foreground" />
+        {isSent && (
+          <StatusIndicator status={messageStatus} />
         )}
       </div>
     </TransitionWrapper>
