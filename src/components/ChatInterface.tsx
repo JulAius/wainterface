@@ -88,18 +88,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   if (!selectedChat) {
     return (
       <EmptyState
-        icon={User}
         title="No conversation selected"
         description="Select a conversation to start chatting"
+        icon={User}
         action={onShowDashboard}
         actionLabel="View Dashboard"
         actionIcon={BarChart2}
+        onShowDashboard={onShowDashboard}
+        onShowCalendar={onShowCalendar}
       />
     );
   }
 
   return (
-    <TransitionWrapper animation="fade-in" className="flex flex-col h-full">
+    <TransitionWrapper animation="fade" className="flex flex-col h-full">
       {/* Chat Header with the contact info */}
       <ChatHeader 
         phone={selectedChat.displayName || selectedChat.phoneNumber || `+${selectedChat.id}`}
@@ -136,7 +138,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
               key={msg.id || i}
               message={msg.body || msg.text}
               timestamp={msg.timestamp}
-              sender={msg.from === 'me' ? 'me' : 'them'}
+              sender={msg.from}
               status={msg.status}
               read={msg.read}
               type={msg.type}
@@ -156,6 +158,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         onSend={handleSendMessage}
         placeholder="Type a message"
         disabled={isLoading || isError}
+        onShowTemplates={onShowTemplateSender}
+        onShowMediaSender={onShowMediaSender}
       />
     </TransitionWrapper>
   );

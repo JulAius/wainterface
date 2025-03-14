@@ -19,11 +19,15 @@ interface MessagePreviewProps {
 }
 
 interface MessageBubbleProps {
-  content: string;
-  sender: 'user' | 'bot';
-  timestamp: Date;
-  status?: MessageStatus;
-  preview?: MessagePreviewProps | null;
+  message: string;
+  sender: 'me' | 'them' | 'user' | 'bot';
+  timestamp: Date | string;
+  status?: string;
+  read?: boolean;
+  type?: string;
+  mediaUrl?: string;
+  filename?: string;
+  caption?: string;
 }
 
 const StatusIndicator: React.FC<{ status: MessageStatus }> = ({ status }) => {
@@ -80,13 +84,32 @@ const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview })
 };
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({
-  content,
+  message,
   sender,
   timestamp,
   status,
-  preview
+  read,
+  type,
+  mediaUrl,
+  filename,
+  caption
 }) => {
-  const isSent = sender === 'bot';
+  // Convert 'me'/'them' to 'user'/'bot' if needed for backwards compatibility
+  const normalizedSender = sender === 'me' ? 'user' : 
+                           sender === 'them' ? 'bot' : 
+                           sender;
+  
+  const isSent = normalizedSender === 'user' || normalizedSender === 'me';
+  
+  // Create a preview object if media type is provided
+  const preview = type ? {
+    type,
+    id: filename || mediaUrl || 'unknown',
+    caption
+  } : null;
+  
+  // Convert timestamp to Date if it's a string
+  const timeObj = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
   
   return (
     <TransitionWrapper
@@ -101,14 +124,21 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       {preview ? (
         <PreviewContent preview={preview} />
       ) : (
-        <p className="break-words text-sm leading-relaxed">{content}</p>
+        <p className="break-words text-sm leading-relaxed">{message}</p>
       )}
       
       <div className="flex items-center justify-end mt-1 space-x-1">
         <span className="text-xs text-muted-foreground/80">
-          {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          {timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
-        {isSent && status && <StatusIndicator status={status} />}
+        {isSent && status && (
+          <span className="text-xs text-muted-foreground/80">
+            {status}
+          </span>
+        )}
+        {isSent && read !== undefined && (
+          read ? <CheckCheck className="w-3.5 h-3.5 text-whatsapp" /> : <Check className="w-3.5 h-3.5 text-muted-foreground" />
+        )}
       </div>
     </TransitionWrapper>
   );
