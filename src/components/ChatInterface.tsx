@@ -1,20 +1,22 @@
 
-import React, { useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMessages, sendMessage, deleteConversationHistory } from '../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getMessages, sendMessage, markMessageAsRead } from '../services/api';
 import ChatHeader from './ChatHeader';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import EmptyState from './EmptyState';
 import TransitionWrapper from './TransitionWrapper';
-import { useToast } from "@/hooks/use-toast";
+import { User, PanelRightOpen, BarChart2, Calendar } from 'lucide-react';
 
 interface ChatInterfaceProps {
-  selectedChat: any | null;
+  selectedChat: any;
   onShowTemplateSender: () => void;
   onShowMediaSender: () => void;
   onShowDashboard: () => void;
   onShowCalendar: () => void;
+  onToggleClientInfo?: () => void;
 }
 
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -22,181 +24,140 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onShowTemplateSender,
   onShowMediaSender,
   onShowDashboard,
-  onShowCalendar
+  onShowCalendar,
+  onToggleClientInfo
 }) => {
+  // State management
+  const [message, setMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
-  
-  // Query for messages
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+
+  // Queries and data fetching
+  const {
+    data: messages = [],
+    isLoading,
+    isError,
+    refetch: refetchMessages
+  } = useQuery({
     queryKey: ['messages', selectedChat?.id],
-    queryFn: () => getMessages(selectedChat.id),
+    queryFn: () => (selectedChat ? getMessages(selectedChat.id) : Promise.resolve([])),
     enabled: !!selectedChat,
-    refetchInterval: selectedChat ? 5000 : false,
-    select: (data) => data.map((msg: any) => ({
-      ...msg,
-      timestamp: new Date(msg.timestamp),
-      preview: msg.preview || null
-    }))
+    refetchInterval: 3000,
   });
 
-  // Send message mutation
-  const sendMessageMutation = useMutation({
-    mutationFn: ({ userId, message }: { userId: string, message: string }) => sendMessage(userId, message),
-    onMutate: async (newMessage) => {
-      await queryClient.cancelQueries({ queryKey: ['messages', selectedChat.id] });
-      const previousMessages = queryClient.getQueryData(['messages', selectedChat.id]);
-      
-      const tempMessage = {
-        messageId: `temp-${Date.now()}`,
-        content: newMessage.message,
-        sender: 'bot',
-        timestamp: new Date(),
-        status: { sent: true, delivered: false, read: false, failed: false, timestamp: null },
-        preview: null,
-      };
-      
-      queryClient.setQueryData(['messages', selectedChat.id], (old: any[] = []) => [
-        ...old,
-        tempMessage,
-      ]);
-      
-      return { previousMessages, tempMessage };
-    },
-    onError: (err, newMessage, context: any) => {
-      queryClient.setQueryData(['messages', selectedChat.id], context.previousMessages);
-      toast({
-        title: "Message Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
-      });
-    },
-    onSuccess: (data, variables, context: any) => {
-      queryClient.setQueryData(['messages', selectedChat.id], (old: any[] = []) => {
-        return old.map(msg => 
-          msg.messageId === context.tempMessage.messageId
-            ? { ...msg, ...data, messageId: data.messageId }
-            : msg
-        );
-      });
-      
-      // After successful message, also update the conversation list
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-    }
-  });
-
-  // Delete history mutation
-  const deleteHistoryMutation = useMutation({
-    mutationFn: deleteConversationHistory,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', selectedChat.id] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast({
-        title: "Conversation Cleared",
-        description: "All messages have been deleted successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete conversation history.",
-        variant: "destructive"
-      });
-    }
-  });
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
-  };
-
-  const handleSendMessage = async (message: string) => {
+  // Send message
+  const handleSendMessage = async () => {
     if (!message.trim() || !selectedChat) return;
     
     try {
-      await sendMessageMutation.mutateAsync({
-        userId: selectedChat.id,
-        message: message.trim()
-      });
+      await sendMessage(selectedChat.id, message);
+      setMessage('');
+      refetchMessages();
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Failed to send message', {
+        description: 'Please try again later',
+      });
     }
   };
 
-  const handleDeleteHistory = async () => {
-    if (!selectedChat) return;
+  // Mark messages as read
+  useEffect(() => {
+    if (!selectedChat || !messages.length) return;
     
-    if (window.confirm('Are you sure you want to delete all conversation history?')) {
+    const unreadMessages = messages.filter(
+      (msg: any) => !msg.read && msg.from !== 'me'
+    );
+    
+    unreadMessages.forEach(async (msg: any) => {
       try {
-        await deleteHistoryMutation.mutateAsync(selectedChat.id);
+        await markMessageAsRead(msg.id);
       } catch (error) {
-        console.error('Error deleting history:', error);
+        console.error('Error marking message as read:', error);
       }
-    }
-  };
+    });
+  }, [messages, selectedChat]);
 
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
+
+  // Render empty state when no chat is selected
   if (!selectedChat) {
     return (
-      <EmptyState 
-        onShowDashboard={onShowDashboard}
-        onShowCalendar={onShowCalendar}
+      <EmptyState
+        icon={User}
+        title="No conversation selected"
+        description="Select a conversation to start chatting"
+        action={onShowDashboard}
+        actionLabel="View Dashboard"
+        actionIcon={BarChart2}
       />
     );
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <ChatHeader
-        chatId={selectedChat.id}
+    <TransitionWrapper animation="fade-in" className="flex flex-col h-full">
+      {/* Chat Header with the contact info */}
+      <ChatHeader 
+        phone={selectedChat.displayName || selectedChat.phoneNumber || `+${selectedChat.id}`}
         isOnline={selectedChat.isOnline}
-        onShowDashboard={onShowDashboard}
+        onOpenMediaModal={onShowMediaSender}
+        onOpenTemplateModal={onShowTemplateSender}
         onShowCalendar={onShowCalendar}
-        onDeleteHistory={handleDeleteHistory}
-        isDeleting={deleteHistoryMutation.isPending}
+        buttons={[
+          {
+            icon: PanelRightOpen,
+            tooltip: "Informations client",
+            onClick: onToggleClientInfo,
+          }
+        ]}
       />
       
-      <TransitionWrapper animation="fade" className="flex-1 overflow-y-auto px-4 py-6 chatbox-bg scrollbar-thin">
-        <div className="space-y-1 max-w-3xl mx-auto">
-          {messagesLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground glass-morphism rounded-xl animate-floating">
-              <p>Aucun message. Démarrez la conversation !</p>
-            </div>
-          ) : (
-            messages.map((msg: any, index: number) => (
-              <MessageBubble
-                key={msg.messageId || index}
-                content={msg.content}
-                sender={msg.sender === 'user' ? 'user' : 'bot'}
-                timestamp={new Date(msg.timestamp)}
-                status={msg.status}
-                preview={msg.preview}
-              />
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      </TransitionWrapper>
+      {/* Messages Container */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+        {isLoading ? (
+          <div className="flex justify-center items-center h-full">
+            <div className="w-8 h-8 border-2 border-whatsapp/20 border-t-whatsapp rounded-full animate-spin" />
+          </div>
+        ) : isError ? (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-destructive">Failed to load messages</p>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="flex justify-center items-center h-full">
+            <p className="text-muted-foreground">No messages yet</p>
+          </div>
+        ) : (
+          messages.map((msg: any, i: number) => (
+            <MessageBubble
+              key={msg.id || i}
+              message={msg.body || msg.text}
+              timestamp={msg.timestamp}
+              sender={msg.from === 'me' ? 'me' : 'them'}
+              status={msg.status}
+              read={msg.read}
+              type={msg.type}
+              mediaUrl={msg.mediaUrl}
+              filename={msg.filename}
+              caption={msg.caption}
+            />
+          ))
+        )}
+        <div ref={messagesEndRef} />
+      </div>
       
+      {/* Message Input */}
       <MessageInput
-        onSendMessage={handleSendMessage}
-        onShowTemplates={onShowTemplateSender}
-        onShowMediaSender={onShowMediaSender}
-        isLoading={sendMessageMutation.isPending}
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        onSend={handleSendMessage}
+        placeholder="Type a message"
+        disabled={isLoading || isError}
       />
-    </div>
+    </TransitionWrapper>
   );
 };
 
