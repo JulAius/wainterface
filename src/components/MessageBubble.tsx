@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
 import TransitionWrapper from './TransitionWrapper';
@@ -49,7 +48,6 @@ const StatusIndicator: React.FC<{ status: MessageStatus }> = ({ status }) => {
 const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview }) => {
   const [isLoading, setIsLoading] = useState(true);
   
-  // Simulate image loading
   React.useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1000);
     return () => clearTimeout(timer);
@@ -94,21 +92,16 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   filename,
   caption
 }) => {
-  // Convert 'me'/'them' to 'user'/'bot' if needed for backwards compatibility
-  const normalizedSender = sender === 'me' ? 'user' : 
-                           sender === 'them' ? 'bot' : 
-                           sender;
+  const normalizedSender = sender === 'me' || sender === 'user' ? 'user' : 'bot';
   
-  const isSent = normalizedSender === 'user' || normalizedSender === 'me';
+  const isSent = normalizedSender === 'user';
   
-  // Create a preview object if media type is provided
   const preview = type ? {
     type,
     id: filename || mediaUrl || 'unknown',
     caption
   } : null;
   
-  // Convert timestamp to Date if it's a string
   const timeObj = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
   
   return (
