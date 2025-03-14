@@ -93,10 +93,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   filename,
   caption
 }) => {
-  // Normaliser le type d'expéditeur pour être compatible avec les types existants
+  // Normalize sender type to match expected values
   const normalizedSender = sender === 'me' || sender === 'user' ? 'user' : 'bot';
   
-  // Déterminer si le message est envoyé par l'utilisateur
+  // Determine if the message is sent by the user
   const isSent = normalizedSender === 'user';
   
   const preview = type ? {
@@ -107,7 +107,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   
   const timeObj = typeof timestamp === 'string' ? new Date(timestamp) : timestamp;
 
-  // Configuration du statut pour l'indicateur
+  // Configure message status for indicator
   const messageStatus: MessageStatus = {
     sent: status === 'sent' || status === 'delivered' || status === 'read',
     delivered: status === 'delivered' || status === 'read',
@@ -122,8 +122,8 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       className={cn(
         "max-w-[70%] rounded-2xl p-3 mb-2",
         isSent 
-          ? "ml-auto bg-whatsapp-glass backdrop-blur-sm border border-whatsapp/10 shadow-sm" 
-          : "mr-auto bg-secondary/60 backdrop-blur-sm border border-white/5 shadow-sm"
+          ? "ml-auto bg-whatsapp-glass text-foreground border border-whatsapp/20 shadow-sm" 
+          : "mr-auto bg-secondary/80 text-foreground border border-white/5 shadow-sm"
       )}
     >
       {preview ? (
@@ -135,7 +135,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       )}
       
       <div className="flex items-center justify-end mt-1 space-x-1">
-        <span className="text-[10px] opacity-70">
+        <span className="text-[10px] text-foreground/70">
           {timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
         {isSent && (
