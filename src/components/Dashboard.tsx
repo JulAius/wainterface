@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, CalendarCheck, Send, RefreshCw, 
@@ -5,7 +6,6 @@ import {
   ThumbsUp, CheckCircle, Eye, Clock, XCircle
 } from 'lucide-react';
 import TransitionWrapper from './TransitionWrapper';
-import { getMetrics, getNpsStats, getAppointments, checkHealth } from '../services/api';
 
 const FILTERED_PHONE_NUMBER = "605370542649440";
 
@@ -14,7 +14,6 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState('week'); // 'day', 'week', 'month'
-  const [systemHealth, setSystemHealth] = useState<any>(null);
   
   // On initialise les statistiques avec des valeurs par défaut
   const [stats, setStats] = useState({
@@ -49,134 +48,176 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
     try {
       setIsRefreshing(true);
       
-      // Check system health
-      try {
-        const healthData = await checkHealth();
-        setSystemHealth(healthData);
-      } catch (err) {
-        console.error('Health check failed:', err);
-        // Continue execution even if health check fails
-      }
+      // For demo purposes, let's use mock data that mimics our API structure
+      // In a real app, you would fetch from actual endpoints
       
-      // Get metrics
-      let metricsData;
-      try {
-        metricsData = await getMetrics();
-      } catch (err) {
-        console.error('Failed to fetch metrics:', err);
-        throw new Error('Erreur lors du chargement des métriques');
-      }
-      
-      // Get NPS stats
-      let npsData;
-      try {
-        // Set date range based on selection
-        let startDate, endDate;
-        const now = new Date();
-        if (dateRange === 'day') {
-          startDate = new Date(now.setDate(now.getDate() - 1)).toISOString().split('T')[0];
-        } else if (dateRange === 'week') {
-          startDate = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
-        } else if (dateRange === 'month') {
-          startDate = new Date(now.setMonth(now.getMonth() - 1)).toISOString().split('T')[0];
+      // Mock conversations data
+      const conversations = [
+        {
+          id: '14155552671',
+          phoneNumber: '14155552671',
+          lastActive: new Date(),
+          messageCount: 24,
+          isOnline: true,
+          lastMessage: 'Thank you for your help!'
+        },
+        {
+          id: '14155552672',
+          phoneNumber: '14155552672',
+          lastActive: new Date(Date.now() - 3600000),
+          messageCount: 15,
+          isOnline: false,
+          lastMessage: 'I need more information about your product'
+        },
+        {
+          id: '14155552673',
+          phoneNumber: '14155552673',
+          lastActive: new Date(Date.now() - 7200000),
+          messageCount: 8,
+          isOnline: false,
+          lastMessage: 'When will my order be shipped?'
         }
-        endDate = new Date().toISOString().split('T')[0];
-        
-        npsData = await getNpsStats(startDate, endDate);
-      } catch (err) {
-        console.error('Failed to fetch NPS stats:', err);
-        npsData = {
-          total: 0,
-          average: 0,
-          promoters: 0,
-          passives: 0,
-          detractors: 0,
-          npsScore: 0,
-          satisfaction_rate: 0,
-          pourcentage_tres_satisfaits: 0,
-          pourcentage_satisfaits: 0,
-          pourcentage_insatisfaits: 0
-        };
-      }
+      ];
       
-      // Get appointments
-      let appointmentsData;
-      try {
-        appointmentsData = await getAppointments();
-      } catch (err) {
-        console.error('Failed to fetch appointments:', err);
-        throw new Error('Erreur lors du chargement des rendez-vous');
-      }
+      // Filter conversations 
+      const filteredConversations = conversations.filter(conv => conv.id !== FILTERED_PHONE_NUMBER);
       
+      // Mock appointments data
+      const appointments = [
+        {
+          user_name: 'John Doe',
+          user_id: '14155552671',
+          appointment_date: '2023-06-15',
+          appointment_time: '10:00',
+          status: 'confirmed'
+        },
+        {
+          user_name: 'Jane Smith',
+          user_id: '14155552672',
+          appointment_date: '2023-06-16',
+          appointment_time: '14:30',
+          status: 'confirmed'
+        },
+        {
+          user_name: 'Bob Johnson',
+          user_id: '14155552673',
+          appointment_date: '2023-06-14',
+          appointment_time: '09:15',
+          status: 'completed'
+        },
+        {
+          user_name: 'Alice Brown',
+          user_id: '14155552674',
+          appointment_date: '2023-06-13',
+          appointment_time: '11:45',
+          status: 'cancelled'
+        }
+      ];
+      
+      // Mock metrics data
+      const metrics = {
+        total: 245,
+        sent: 120,
+        received: 125,
+        delivered: 115,
+        read: 105,
+        failed: 5,
+        templates: {
+          total: 50,
+          delivered: 45,
+          read: 40,
+          pending: 3,
+          failed: 2
+        }
+      };
+      
+      // Mock NPS data
+      const npsData = {
+        total: 100,
+        score_moyen: 8.5,
+        tres_satisfaits: 70,
+        satisfaits: 20,
+        insatisfaits: 10,
+        pourcentage_tres_satisfaits: 70,
+        pourcentage_satisfaits: 20,
+        pourcentage_insatisfaits: 10,
+        satisfaction_rate: 60
+      };
+
+      // Calculate active and new conversations
+      const activeConversations = filteredConversations.filter(c => {
+        const lastActive = new Date(c.lastActive);
+        return !isNaN(lastActive.getTime()) && lastActive > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      });
+      
+      const newConversations = filteredConversations.filter(c => {
+        const lastActive = new Date(c.lastActive);
+        return !isNaN(lastActive.getTime()) && lastActive > new Date(Date.now() - 24 * 60 * 60 * 1000);
+      });
+
       // Calculate appointment statistics
-      const appointments = appointmentsData.appointments || [];
-      const scheduledAppointments = appointments.filter((a: any) => a.status === 'confirmed');
-      const completedAppointments = appointments.filter((a: any) => a.status === 'completed');
-      const cancelledAppointments = appointments.filter((a: any) => a.status === 'cancelled');
+      const scheduledAppointments = appointments.filter(a => a.status === 'confirmed');
+      const completedAppointments = appointments.filter(a => a.status === 'completed');
+      const cancelledAppointments = appointments.filter(a => a.status === 'cancelled');
       
-      const appointmentStats = {
+      const appointmentStatsReal = {
         total: appointments.length,
         scheduled: scheduledAppointments.length,
         completed: completedAppointments.length,
         cancelled: cancelledAppointments.length
       };
 
-      // Filter and sort upcoming appointments
+      // Sort and filter upcoming appointments
       const upcomingAppts = [...appointments]
-        .filter((a: any) => {
+        .filter(a => {
           if (a.status !== 'confirmed') return false;
           const apptDate = new Date(`${a.appointment_date}T${a.appointment_time}`);
           return apptDate >= new Date();
         })
-        .sort((a: any, b: any) => {
+        .sort((a, b) => {
           const dateA = new Date(`${a.appointment_date}T${a.appointment_time}`);
           const dateB = new Date(`${b.appointment_date}T${b.appointment_time}`);
           return dateA.getTime() - dateB.getTime();
         })
         .slice(0, 5);
 
-      // Template statistics from metrics
-      const templateStats = metricsData.templates ? {
-        total: metricsData.templates.total || 0,
-        delivered: metricsData.templates.delivered || 0,
-        read: metricsData.templates.read || 0,
-        pending: metricsData.templates.pending || 0,
-        failed: metricsData.templates.failed || 0
-      } : {
-        total: 0,
-        delivered: 0,
-        read: 0,
-        pending: 0,
-        failed: 0
+      // Template statistics
+      const templateStats = {
+        total: metrics.templates?.total || 0,
+        delivered: metrics.templates?.delivered || 0,
+        read: metrics.templates?.read || 0,
+        pending: metrics.templates?.pending || 0,
+        failed: metrics.templates?.failed || 0
       };
 
-      // Update stats state with metrics data
+      // Update stats state
       setStats({
         conversations: {
-          total: metricsData.conversations?.total || 0,
-          active: metricsData.conversations?.active || 0,
-          new: metricsData.conversations?.new || 0
+          total: filteredConversations.length,
+          active: activeConversations.length,
+          new: newConversations.length
         },
         messages: {
-          total: metricsData.total || 0,
-          sent: metricsData.sent || 0,
-          received: metricsData.received || 0,
-          delivered: metricsData.delivered || 0,
-          read: metricsData.read || 0,
-          failed: metricsData.failed || 0
+          total: metrics.total || 0,
+          sent: metrics.sent || 0,
+          received: metrics.received || 0,
+          delivered: metrics.delivered || 0,
+          read: metrics.read || 0,
+          failed: metrics.failed || 0
         },
-        appointments: appointmentStats,
+        appointments: appointmentStatsReal,
         templates: templateStats
       });
 
       // Update NPS stats
       setNpsStats({
         total: npsData.total || 0,
-        average: npsData.average || 0,
-        promoters: npsData.promoters || 0,
-        passives: npsData.passives || 0,
-        detractors: npsData.detractors || 0,
-        npsScore: npsData.satisfaction_rate || 0
+        average: npsData.score_moyen || 0,
+        promoters: npsData.tres_satisfaits || 0,
+        passives: npsData.satisfaits || 0,
+        detractors: npsData.insatisfaits || 0,
+        npsScore: npsData.satisfaction_rate ? 
+                npsData.pourcentage_tres_satisfaits - npsData.pourcentage_insatisfaits : 0
       });
 
       // Update upcoming appointments
@@ -185,7 +226,7 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
       setLoading(false);
     } catch (err) {
       console.error('Erreur chargement stats:', err);
-      setError(err instanceof Error ? err.message : 'Erreur lors du chargement des statistiques');
+      setError('Erreur lors du chargement des statistiques');
       setLoading(false);
     } finally {
       setIsRefreshing(false);
@@ -284,27 +325,6 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
           </button>
         </div>
       </div>
-
-      {/* System Health Banner */}
-      {systemHealth && (
-        <div className={`mb-6 p-4 rounded-lg ${
-          systemHealth.status === 'OK' ? 'bg-whatsapp/10 border border-whatsapp/30' : 'bg-destructive/10 border border-destructive/30'
-        }`}>
-          <div className="flex items-center">
-            {systemHealth.status === 'OK' ? (
-              <CheckCircle className="w-5 h-5 text-whatsapp mr-2" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-destructive mr-2" />
-            )}
-            <div>
-              <span className="font-medium">État du système: {systemHealth.status}</span>
-              <span className="text-sm text-muted-foreground ml-2">
-                Version: {systemHealth.version} | Base de données: {systemHealth.database} | {new Date(systemHealth.timestamp).toLocaleString()}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Cartes KPI */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-6">
@@ -477,7 +497,7 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
               </thead>
               <tbody>
                 {upcomingAppointments.map((appointment, index) => (
-                  <tr key={appointment.id || index} className="hover:bg-accent/30 transition-colors">
+                  <tr key={index} className="hover:bg-accent/30 transition-colors">
                     <td className="p-2 border-b border-border/50">{appointment.user_name}</td>
                     <td className="p-2 border-b border-border/50">+{appointment.user_id}</td>
                     <td className="p-2 border-b border-border/50">
@@ -716,8 +736,8 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
           <div>
             <h3 className="text-amber-400 font-medium mb-1">Information importante</h3>
             <p className="text-foreground text-sm">
-              Ce tableau de bord affiche les données récupérées depuis l'API de Croisieres.fr.
-              Si certaines données n'apparaissent pas, vérifiez que l'API est bien accessible.
+              Ce tableau de bord affiche uniquement des données simulées à des fins de démonstration.
+              Dans une application réelle, ces données seraient récupérées depuis une API backend.
             </p>
           </div>
         </div>
@@ -727,4 +747,3 @@ const Dashboard = ({ onClose }: { onClose: () => void }) => {
 };
 
 export default Dashboard;
-

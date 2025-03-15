@@ -33,7 +33,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
 
   return (
     <TransitionWrapper animation="slide-bottom">
-      <div className="p-4 bg-card/90 backdrop-blur-md border-t border-white/5 flex items-center space-x-3 shadow-lg">
+      <div className="p-4 bg-card border-t border-border flex items-center space-x-3">
         <div className="flex items-center space-x-2">
           <IconButton title="Emoji">
             <Smile className="w-5 h-5" />
@@ -53,7 +53,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Message"
-            className="w-full py-2.5 px-4 bg-secondary/50 backdrop-blur-sm text-foreground placeholder-muted-foreground/70 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-whatsapp/30 transition-all border border-white/5"
+            className="w-full py-2.5 px-4 bg-secondary text-foreground placeholder-muted-foreground rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
           />
         </div>
         

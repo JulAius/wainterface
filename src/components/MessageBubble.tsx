@@ -2,7 +2,6 @@
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
 import TransitionWrapper from './TransitionWrapper';
-import { Check, CheckCheck, Clock, XCircle } from 'lucide-react';
 
 interface MessageStatus {
   sent: boolean;
@@ -28,18 +27,18 @@ interface MessageBubbleProps {
 
 const StatusIndicator: React.FC<{ status: MessageStatus }> = ({ status }) => {
   if (status.failed) {
-    return <XCircle className="w-3.5 h-3.5 text-destructive" />;
+    return <span className="text-destructive ml-1 text-sm">•</span>;
   }
   if (status.read) {
-    return <CheckCheck className="w-3.5 h-3.5 text-whatsapp" />;
+    return <span className="text-whatsapp ml-1 text-sm">••</span>;
   }
   if (status.delivered) {
-    return <CheckCheck className="w-3.5 h-3.5 text-muted-foreground" />;
+    return <span className="text-muted-foreground ml-1 text-sm">••</span>;
   }
   if (status.sent) {
-    return <Check className="w-3.5 h-3.5 text-muted-foreground" />;
+    return <span className="text-muted-foreground ml-1 text-sm">•</span>;
   }
-  return <Clock className="w-3.5 h-3.5 text-muted-foreground animate-pulse" />;
+  return null;
 };
 
 const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview }) => {
@@ -53,7 +52,7 @@ const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview })
 
   if (isLoading) {
     return (
-      <div className="w-full h-40 bg-accent/50 animate-pulse rounded-lg backdrop-blur-sm"></div>
+      <div className="w-full h-40 bg-accent animate-pulse rounded-lg"></div>
     );
   }
 
@@ -61,16 +60,16 @@ const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview })
     <div className="space-y-2">
       <div className="rounded-lg overflow-hidden">
         {preview.type.includes('image') ? (
-          <div className="bg-accent/50 backdrop-blur-sm rounded-lg w-full h-40 flex items-center justify-center shadow-inner">
-            <div className="text-sm text-foreground/80 glass-morphism px-3 py-1 rounded-full">Image Preview</div>
+          <div className="bg-accent rounded-lg w-full h-40 flex items-center justify-center">
+            <div className="text-sm text-muted-foreground">Image Preview</div>
           </div>
         ) : preview.type.includes('video') ? (
-          <div className="bg-accent/50 backdrop-blur-sm rounded-lg w-full h-40 flex items-center justify-center shadow-inner">
-            <div className="text-sm text-foreground/80 glass-morphism px-3 py-1 rounded-full">Video Preview</div>
+          <div className="bg-accent rounded-lg w-full h-40 flex items-center justify-center">
+            <div className="text-sm text-muted-foreground">Video Preview</div>
           </div>
         ) : (
-          <div className="bg-accent/50 backdrop-blur-sm rounded-lg w-full py-6 flex items-center justify-center shadow-inner">
-            <div className="text-sm text-foreground/80 glass-morphism px-3 py-1 rounded-full">File: {preview.id}</div>
+          <div className="bg-accent rounded-lg w-full py-6 flex items-center justify-center">
+            <div className="text-sm text-muted-foreground">File: {preview.id}</div>
           </div>
         )}
       </div>
@@ -93,9 +92,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       animation={isSent ? 'slide-left' : 'slide-right'}
       className={cn(
         "max-w-[70%] p-3 mb-2",
-        isSent 
-          ? "ml-auto message-bubble-sent" 
-          : "mr-auto message-bubble-received"
+        isSent ? "ml-auto message-bubble-sent" : "mr-auto message-bubble-received"
       )}
     >
       {preview ? (
@@ -105,7 +102,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       )}
       
       <div className="flex items-center justify-end mt-1 space-x-1">
-        <span className="text-xs text-muted-foreground/80">
+        <span className="text-xs text-muted-foreground">
           {timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
         {isSent && status && <StatusIndicator status={status} />}

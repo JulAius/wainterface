@@ -9,7 +9,6 @@ interface ConversationProps {
   isOnline?: boolean;
   isSelected?: boolean;
   onClick: () => void;
-  lastMessage?: string;
 }
 
 const Conversation: React.FC<ConversationProps> = ({
@@ -18,41 +17,31 @@ const Conversation: React.FC<ConversationProps> = ({
   messageCount,
   isOnline = false,
   isSelected = false,
-  lastMessage,
   onClick
 }) => {
   return (
     <div
       onClick={onClick}
       className={cn(
-        "px-4 py-3 cursor-pointer transition-all duration-300 border-b border-white/5 relative overflow-hidden",
+        "px-4 py-3 cursor-pointer transition-all duration-200 border-b border-border",
         isSelected
-          ? "bg-accent/70 backdrop-blur-sm after:absolute after:inset-0 after:bg-gradient-to-r after:from-whatsapp/20 after:to-transparent after:opacity-20 after:pointer-events-none"
-          : "hover:bg-secondary/60 hover:backdrop-blur-sm"
+          ? "bg-accent"
+          : "hover:bg-secondary/60"
       )}
     >
-      <div className="flex items-center space-x-3 relative z-10">
+      <div className="flex items-center space-x-3">
         <div className="relative">
-          <div className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground shadow-md transition-all duration-300",
-            isSelected ? "bg-whatsapp/20 text-foreground glass-morphism" : "bg-accent/50"
-          )}>
+          <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-muted-foreground">
             <span>{id.substring(0, 2)}</span>
           </div>
           {isOnline && (
-            <div className={cn(
-              "absolute bottom-0 right-0 w-3 h-3 bg-whatsapp rounded-full border-2 shadow-neon animate-pulse",
-              isSelected ? "border-accent" : "border-card"
-            )}></div>
+            <div className="absolute bottom-0 right-0 w-3 h-3 bg-whatsapp rounded-full border-2 border-background"></div>
           )}
         </div>
         
         <div className="flex-1 min-w-0">
           <div className="flex justify-between items-center">
-            <h3 className={cn(
-              "font-medium text-fade-truncate",
-              isSelected ? "text-foreground" : "text-foreground/90"
-            )}>+{id}</h3>
+            <h3 className="font-medium text-foreground text-fade-truncate">+{id}</h3>
             <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
               {lastActive.toLocaleTimeString('fr-FR', {
                 hour: '2-digit',
@@ -60,11 +49,8 @@ const Conversation: React.FC<ConversationProps> = ({
               })}
             </span>
           </div>
-          <p className={cn(
-            "text-xs truncate",
-            isSelected ? "text-foreground/70" : "text-muted-foreground"
-          )}>
-            {lastMessage ? lastMessage : `${messageCount} messages`}
+          <p className="text-xs text-muted-foreground truncate">
+            {`${messageCount} messages`}
           </p>
         </div>
       </div>

@@ -7,7 +7,6 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import EmptyState from './EmptyState';
 import TransitionWrapper from './TransitionWrapper';
-import { useToast } from "@/hooks/use-toast";
 
 interface ChatInterfaceProps {
   selectedChat: any | null;
@@ -26,10 +25,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
-  const { toast } = useToast();
   
   // Query for messages
-  const { data: messages = [], isLoading: messagesLoading } = useQuery({
+  const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedChat?.id],
     queryFn: () => getMessages(selectedChat.id),
     enabled: !!selectedChat,
@@ -37,7 +35,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     select: (data) => data.map((msg: any) => ({
       ...msg,
       timestamp: new Date(msg.timestamp),
-      preview: msg.preview || null
+      preview: msg.mediaId ? {
+        type: msg.type,
+        id: msg.mediaId,
+        caption: msg.caption,
+        mime_type: msg.mimeType
+      } : null
     }))
   });
 
@@ -49,11 +52,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const previousMessages = queryClient.getQueryData(['messages', selectedChat.id]);
       
       const tempMessage = {
-        messageId: `temp-${Date.now()}`,
         content: newMessage.message,
         sender: 'bot',
         timestamp: new Date(),
         status: { sent: true, delivered: false, read: false, failed: false, timestamp: null },
+        messageId: `temp-${Date.now()}`,
         preview: null,
       };
       
@@ -66,11 +69,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     },
     onError: (err, newMessage, context: any) => {
       queryClient.setQueryData(['messages', selectedChat.id], context.previousMessages);
-      toast({
-        title: "Message Error",
-        description: "Failed to send message. Please try again.",
-        variant: "destructive"
-      });
     },
     onSuccess: (data, variables, context: any) => {
       queryClient.setQueryData(['messages', selectedChat.id], (old: any[] = []) => {
@@ -80,9 +78,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             : msg
         );
       });
-      
-      // After successful message, also update the conversation list
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
 
@@ -92,17 +87,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['messages', selectedChat.id] });
       queryClient.invalidateQueries({ queryKey: ['conversations'] });
-      toast({
-        title: "Conversation Cleared",
-        description: "All messages have been deleted successfully.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete conversation history.",
-        variant: "destructive"
-      });
     }
   });
 
@@ -136,6 +120,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         await deleteHistoryMutation.mutateAsync(selectedChat.id);
       } catch (error) {
         console.error('Error deleting history:', error);
+        alert('Error deleting conversation history');
       }
     }
   };
@@ -162,30 +147,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       
       <TransitionWrapper animation="fade" className="flex-1 overflow-y-auto px-4 py-6 chatbox-bg scrollbar-thin">
         <div className="space-y-1 max-w-3xl mx-auto">
-          {messagesLoading ? (
-            <div className="flex justify-center items-center h-40">
-              <div className="typing-indicator">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center p-8 text-muted-foreground glass-morphism rounded-xl animate-floating">
-              <p>Aucun message. Démarrez la conversation !</p>
-            </div>
-          ) : (
-            messages.map((msg: any, index: number) => (
-              <MessageBubble
-                key={msg.messageId || index}
-                content={msg.content}
-                sender={msg.sender === 'user' ? 'user' : 'bot'}
-                timestamp={new Date(msg.timestamp)}
-                status={msg.status}
-                preview={msg.preview}
-              />
-            ))
-          )}
+          {messages.map((msg: any, index: number) => (
+            <MessageBubble
+              key={msg.messageId || index}
+              content={msg.content}
+              sender={msg.sender === 'user' ? 'user' : 'bot'}
+              timestamp={new Date(msg.timestamp)}
+              status={msg.status}
+              preview={msg.preview}
+            />
+          ))}
           <div ref={messagesEndRef} />
         </div>
       </TransitionWrapper>

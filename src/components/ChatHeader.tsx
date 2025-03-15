@@ -23,17 +23,17 @@ const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   return (
     <TransitionWrapper animation="slide-bottom">
-      <div className="p-4 bg-card/90 backdrop-blur-md border-b border-white/5 flex justify-between items-center shadow-md">
+      <div className="p-4 bg-card border-b border-border flex justify-between items-center">
         <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full overflow-hidden bg-accent/50 flex items-center justify-center text-muted-foreground mr-3 border border-white/5 shadow-md">
-            <span className="text-foreground font-medium">{chatId.substring(0, 2)}</span>
+          <div className="w-9 h-9 rounded-full bg-accent flex items-center justify-center text-muted-foreground mr-3">
+            <span>{chatId.substring(0, 2)}</span>
           </div>
           <div>
             <h2 className="font-medium text-foreground">
               +{chatId}
             </h2>
             <span className={`text-xs font-medium ${
-              isOnline ? 'text-whatsapp animate-pulse' : 'text-muted-foreground'
+              isOnline ? 'text-whatsapp' : 'text-muted-foreground'
             }`}>
               {isOnline ? 'Online' : 'Offline'}
             </span>
