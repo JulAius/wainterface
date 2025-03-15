@@ -1,7 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, ArrowRight, RefreshCw, AlertCircle } from 'lucide-react';
 import TransitionWrapper from './TransitionWrapper';
+import { getAppointments } from '../services/api';
+import { toast } from 'sonner';
 
 interface AppointmentsCalendarProps {
   onClose: () => void;
@@ -9,45 +11,9 @@ interface AppointmentsCalendarProps {
 
 const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) => {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [loading, setLoading] = useState(false);
-  const [appointments, setAppointments] = useState<any[]>([
-    {
-      id: 1,
-      user_name: 'John Doe',
-      user_id: '14155552671',
-      appointment_date: '2023-06-15',
-      appointment_time: '10:00',
-      status: 'confirmed',
-      notes: 'Consultation initiale'
-    },
-    {
-      id: 2,
-      user_name: 'Jane Smith',
-      user_id: '14155552672',
-      appointment_date: '2023-06-16',
-      appointment_time: '14:30',
-      status: 'confirmed',
-      notes: 'Suivi mensuel'
-    },
-    {
-      id: 3,
-      user_name: 'Bob Johnson',
-      user_id: '14155552673',
-      appointment_date: '2023-06-14',
-      appointment_time: '09:15',
-      status: 'completed',
-      notes: 'Présentation des résultats'
-    },
-    {
-      id: 4,
-      user_name: 'Alice Brown',
-      user_id: '14155552674',
-      appointment_date: '2023-06-13',
-      appointment_time: '11:45',
-      status: 'cancelled',
-      notes: 'Annulé par le client'
-    }
-  ]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [appointments, setAppointments] = useState<any[]>([]);
 
   // Organize appointments by date for calendar display
   const appointmentsByDate = appointments.reduce((acc: Record<string, any[]>, appointment) => {
@@ -57,6 +23,27 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
     acc[appointment.appointment_date].push(appointment);
     return acc;
   }, {});
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [currentMonth]);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      const data = await getAppointments(0, 100);
+      setAppointments(data || []);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching appointments:', err);
+      setError('Erreur lors du chargement des rendez-vous');
+      toast.error('Erreur de chargement', {
+        description: 'Impossible de charger les rendez-vous'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Generate calendar days for the current month
   const generateCalendarDays = () => {
@@ -105,11 +92,7 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
   };
 
   const handleRefresh = () => {
-    setLoading(true);
-    // Simulate fetching data
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    fetchAppointments();
   };
 
   return (
@@ -135,142 +118,161 @@ const AppointmentsCalendar: React.FC<AppointmentsCalendarProps> = ({ onClose }) 
         </button>
       </div>
 
-      <div className="bg-card rounded-lg shadow-lg overflow-hidden">
-        {/* Calendar header */}
-        <div className="bg-secondary p-4 flex justify-between items-center">
+      {loading && !appointments.length ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="w-12 h-12 border-4 border-t-whatsapp border-whatsapp/30 rounded-full animate-spin"></div>
+        </div>
+      ) : error ? (
+        <div className="text-center p-6 bg-destructive/10 rounded-lg">
+          <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-2" />
+          <p className="text-destructive">{error}</p>
           <button 
-            onClick={prevMonth}
-            className="p-2 rounded-full hover:bg-accent/50 transition-colors"
+            onClick={handleRefresh}
+            className="mt-4 px-4 py-2 bg-whatsapp text-black rounded-lg hover:bg-whatsapp-light"
           >
-            <ArrowRight className="w-5 h-5 transform rotate-180" />
-          </button>
-          
-          <h2 className="text-xl font-medium">
-            {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-          </h2>
-          
-          <button 
-            onClick={nextMonth}
-            className="p-2 rounded-full hover:bg-accent/50 transition-colors"
-          >
-            <ArrowRight className="w-5 h-5" />
+            Réessayer
           </button>
         </div>
+      ) : (
+        <>
+          <div className="bg-card rounded-lg shadow-lg overflow-hidden">
+            {/* Calendar header */}
+            <div className="bg-secondary p-4 flex justify-between items-center">
+              <button 
+                onClick={prevMonth}
+                className="p-2 rounded-full hover:bg-accent/50 transition-colors"
+              >
+                <ArrowRight className="w-5 h-5 transform rotate-180" />
+              </button>
+              
+              <h2 className="text-xl font-medium">
+                {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+              </h2>
+              
+              <button 
+                onClick={nextMonth}
+                className="p-2 rounded-full hover:bg-accent/50 transition-colors"
+              >
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
 
-        {/* Calendar grid */}
-        <div className="p-4">
-          {/* Weekday headers */}
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {weekdays.map(day => (
-              <div key={day} className="text-center py-2 text-sm font-medium text-muted-foreground">
-                {day}
+            {/* Calendar grid */}
+            <div className="p-4">
+              {/* Weekday headers */}
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {weekdays.map(day => (
+                  <div key={day} className="text-center py-2 text-sm font-medium text-muted-foreground">
+                    {day}
+                  </div>
+                ))}
               </div>
-            ))}
+
+              {/* Calendar days */}
+              <div className="grid grid-cols-7 gap-1">
+                {calendarDays.map((day, index) => (
+                  <div 
+                    key={index} 
+                    className={`min-h-[100px] p-2 rounded-md ${
+                      !day ? 'bg-transparent' :
+                      day.isToday ? 'bg-whatsapp/10 border border-whatsapp/30' : 
+                      'bg-secondary hover:bg-accent/30 transition-colors'
+                    } relative`}
+                  >
+                    {day && (
+                      <>
+                        <div className="flex justify-between items-center mb-2">
+                          <span className={`${
+                            day.isToday ? 'bg-whatsapp text-black' : 'text-muted-foreground'
+                          } ${day.isToday ? 'w-6 h-6 flex items-center justify-center rounded-full' : ''}`}>
+                            {day.day}
+                          </span>
+                          {day.hasAppointments > 0 && (
+                            <span className="bg-whatsapp text-black text-xs px-1.5 py-0.5 rounded-full">
+                              {day.hasAppointments}
+                            </span>
+                          )}
+                        </div>
+                        <div className="space-y-1">
+                          {day.appointments.slice(0, 3).map((appointment: any, i: number) => (
+                            <div 
+                              key={i}
+                              className={`text-xs p-1 rounded ${
+                                appointment.status === 'confirmed' ? 'bg-sky-500/20 text-sky-400' :
+                                appointment.status === 'completed' ? 'bg-whatsapp/20 text-whatsapp-light' :
+                                'bg-destructive/20 text-destructive'
+                              }`}
+                            >
+                              <div className="truncate font-medium">
+                                {appointment.appointment_time} - {appointment.user_name}
+                              </div>
+                            </div>
+                          ))}
+                          {day.appointments.length > 3 && (
+                            <div className="text-xs text-muted-foreground text-center">
+                              +{day.appointments.length - 3} autres
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Calendar days */}
-          <div className="grid grid-cols-7 gap-1">
-            {calendarDays.map((day, index) => (
-              <div 
-                key={index} 
-                className={`min-h-[100px] p-2 rounded-md ${
-                  !day ? 'bg-transparent' :
-                  day.isToday ? 'bg-whatsapp/10 border border-whatsapp/30' : 
-                  'bg-secondary hover:bg-accent/30 transition-colors'
-                } relative`}
-              >
-                {day && (
-                  <>
-                    <div className="flex justify-between items-center mb-2">
-                      <span className={`${
-                        day.isToday ? 'bg-whatsapp text-black' : 'text-muted-foreground'
-                      } ${day.isToday ? 'w-6 h-6 flex items-center justify-center rounded-full' : ''}`}>
-                        {day.day}
-                      </span>
-                      {day.hasAppointments > 0 && (
-                        <span className="bg-whatsapp text-black text-xs px-1.5 py-0.5 rounded-full">
-                          {day.hasAppointments}
-                        </span>
-                      )}
-                    </div>
-                    <div className="space-y-1">
-                      {day.appointments.slice(0, 3).map((appointment: any, i: number) => (
-                        <div 
-                          key={i}
-                          className={`text-xs p-1 rounded ${
+          {/* Liste des prochains rendez-vous */}
+          <div className="bg-card rounded-lg p-6 shadow-lg mt-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-lg font-medium">Liste des rendez-vous</h3>
+            </div>
+            
+            {appointments.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr>
+                      <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Client</th>
+                      <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Téléphone</th>
+                      <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Date</th>
+                      <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Heure</th>
+                      <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Statut</th>
+                      <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appointments.map((appointment, index) => (
+                      <tr key={index} className="hover:bg-accent/30 transition-colors">
+                        <td className="p-2 border-b border-border/50">{appointment.user_name}</td>
+                        <td className="p-2 border-b border-border/50">+{appointment.user_id}</td>
+                        <td className="p-2 border-b border-border/50">{appointment.appointment_date}</td>
+                        <td className="p-2 border-b border-border/50">{appointment.appointment_time}</td>
+                        <td className="p-2 border-b border-border/50">
+                          <span className={`px-2 py-1 rounded-full text-xs ${
                             appointment.status === 'confirmed' ? 'bg-sky-500/20 text-sky-400' :
                             appointment.status === 'completed' ? 'bg-whatsapp/20 text-whatsapp-light' :
                             'bg-destructive/20 text-destructive'
-                          }`}
-                        >
-                          <div className="truncate font-medium">
-                            {appointment.appointment_time} - {appointment.user_name}
-                          </div>
-                        </div>
-                      ))}
-                      {day.appointments.length > 3 && (
-                        <div className="text-xs text-muted-foreground text-center">
-                          +{day.appointments.length - 3} autres
-                        </div>
-                      )}
-                    </div>
-                  </>
-                )}
+                          }`}>
+                            {appointment.status === 'confirmed' ? 'Confirmé' :
+                             appointment.status === 'completed' ? 'Complété' : 'Annulé'}
+                          </span>
+                        </td>
+                        <td className="p-2 border-b border-border/50 max-w-xs truncate">{appointment.notes}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            ) : (
+              <div className="text-center p-6 text-muted-foreground">
+                <AlertCircle className="w-12 h-12 opacity-50 mx-auto mb-2" />
+                <p>Aucun rendez-vous disponible</p>
+              </div>
+            )}
           </div>
-        </div>
-      </div>
-
-      {/* Liste des prochains rendez-vous */}
-      <div className="bg-card rounded-lg p-6 shadow-lg mt-6">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-lg font-medium">Liste des rendez-vous</h3>
-        </div>
-        
-        {appointments.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr>
-                  <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Client</th>
-                  <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Téléphone</th>
-                  <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Date</th>
-                  <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Heure</th>
-                  <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Statut</th>
-                  <th className="p-2 border-b border-border text-left text-muted-foreground font-medium">Notes</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appointment, index) => (
-                  <tr key={index} className="hover:bg-accent/30 transition-colors">
-                    <td className="p-2 border-b border-border/50">{appointment.user_name}</td>
-                    <td className="p-2 border-b border-border/50">+{appointment.user_id}</td>
-                    <td className="p-2 border-b border-border/50">{appointment.appointment_date}</td>
-                    <td className="p-2 border-b border-border/50">{appointment.appointment_time}</td>
-                    <td className="p-2 border-b border-border/50">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        appointment.status === 'confirmed' ? 'bg-sky-500/20 text-sky-400' :
-                        appointment.status === 'completed' ? 'bg-whatsapp/20 text-whatsapp-light' :
-                        'bg-destructive/20 text-destructive'
-                      }`}>
-                        {appointment.status === 'confirmed' ? 'Confirmé' :
-                         appointment.status === 'completed' ? 'Complété' : 'Annulé'}
-                      </span>
-                    </td>
-                    <td className="p-2 border-b border-border/50 max-w-xs truncate">{appointment.notes}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center p-6 text-muted-foreground">
-            <AlertCircle className="w-12 h-12 opacity-50 mx-auto mb-2" />
-            <p>Aucun rendez-vous disponible</p>
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </TransitionWrapper>
   );
 };

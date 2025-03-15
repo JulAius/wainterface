@@ -64,13 +64,6 @@ const Index = () => {
     }
   });
 
-  // Display error toast if conversations couldn't be loaded
-  if (isError) {
-    toast.error('Error loading conversations', {
-      description: 'Failed to load conversations. Please try again later.',
-    });
-  }
-
   // Display Dashboard or Calendar when selected
   if (showDashboard) {
     return <Dashboard onClose={() => setShowDashboard(false)} />;
