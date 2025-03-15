@@ -110,4 +110,21 @@
   .text-fade-truncate {
     mask-image: linear-gradient(to right, black 80%, transparent 95%);
   }
+
+  /* Styles complémentaires adaptés à WhatsApp */
+  .whatsapp-modal {
+    @apply bg-card border border-border rounded-lg shadow-lg;
+  }
+  
+  .whatsapp-input {
+    @apply bg-secondary text-foreground placeholder-muted-foreground rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-whatsapp/30;
+  }
+  
+  .whatsapp-button-primary {
+    @apply bg-whatsapp text-black font-medium rounded-lg hover:bg-whatsapp-light transition-all duration-200;
+  }
+  
+  .whatsapp-button-secondary {
+    @apply bg-secondary text-foreground rounded-lg hover:bg-accent transition-all duration-200;
+  }
 }

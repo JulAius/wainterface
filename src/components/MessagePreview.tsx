@@ -56,21 +56,21 @@ const MessagePreview: React.FC<{ preview: PreviewProps | null }> = ({ preview })
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => window.open(`/api/media/${mediaId}/download`, '_blank')}
-            className="p-1 hover:bg-emerald-600 rounded"
+            className="p-1 hover:bg-whatsapp/20 rounded"
             title="Ouvrir"
           >
-            <ExternalLink className="w-4 h-4 text-gray-400 hover:text-white" />
+            <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-whatsapp" />
           </button>
           <button
             onClick={() => handleDownload(mediaId)}
-            className="p-1 hover:bg-emerald-600 rounded"
+            className="p-1 hover:bg-whatsapp/20 rounded"
             title="Télécharger"
           >
-            <Download className="w-4 h-4 text-gray-400 hover:text-white" />
+            <Download className="w-4 h-4 text-muted-foreground hover:text-whatsapp" />
           </button>
         </div>
         {preview.caption && (
-          <p className="text-sm text-gray-400 mt-1">{preview.caption}</p>
+          <p className="text-sm text-muted-foreground mt-1">{preview.caption}</p>
         )}
       </div>
     );
@@ -89,26 +89,26 @@ const MessagePreview: React.FC<{ preview: PreviewProps | null }> = ({ preview })
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-2 p-2 bg-[#2a3942] rounded-lg">
-        <Icon className="w-5 h-5 text-gray-400" />
-        <span className="text-sm text-gray-300">
+      <div className="flex items-center gap-2 p-2 bg-secondary rounded-lg">
+        <Icon className="w-5 h-5 text-muted-foreground" />
+        <span className="text-sm text-foreground">
           {preview.caption || preview.filename || `${preview.type} Media`}
         </span>
       </div>
       <div className="flex items-center justify-end gap-2">
         <button
           onClick={() => window.open(`/api/media/${mediaId}/download`, '_blank')}
-          className="p-1 hover:bg-emerald-600 rounded"
+          className="p-1 hover:bg-whatsapp/20 rounded"
           title="Ouvrir"
         >
-          <ExternalLink className="w-4 h-4 text-gray-400 hover:text-white" />
+          <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-whatsapp" />
         </button>
         <button
           onClick={() => handleDownload(mediaId)}
-          className="p-1 hover:bg-emerald-600 rounded"
+          className="p-1 hover:bg-whatsapp/20 rounded"
           title="Télécharger"
         >
-          <Download className="w-4 h-4 text-gray-400 hover:text-white" />
+          <Download className="w-4 h-4 text-muted-foreground hover:text-whatsapp" />
         </button>
       </div>
     </div>
