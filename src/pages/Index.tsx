@@ -9,6 +9,10 @@ import AppointmentsCalendar from '../components/AppointmentsCalendar';
 import ConversationList from '../components/ConversationList';
 import ModalWrapper from '../components/ModalWrapper';
 import { toast } from 'sonner';
+import TemplateSender from '../components/TemplateSender';
+import NewConversation from '../components/NewConversation';
+import MediaSender from '../components/MediaSender';
+import DistributionListModal from '../components/DistributionListModal';
 
 // Filter out this specific phone number if needed
 const FILTERED_PHONE_NUMBER = "605370542649440";
@@ -105,28 +109,51 @@ const Index = () => {
         <ModalWrapper 
           title="Template Sender" 
           onClose={() => setShowTemplateSender(false)} 
-        />
+        >
+          <TemplateSender 
+            selectedChat={selectedChat} 
+            onClose={() => setShowTemplateSender(false)} 
+          />
+        </ModalWrapper>
       )}
 
       {showNewConversation && (
         <ModalWrapper 
           title="New Conversation" 
           onClose={() => setShowNewConversation(false)} 
-        />
+        >
+          <NewConversation 
+            onClose={() => setShowNewConversation(false)} 
+            onSuccess={() => {
+              toast.success("Nouveau message envoyé", {
+                description: "Le contact sera affiché dans la liste une fois qu'il aura répondu."
+              });
+            }}
+          />
+        </ModalWrapper>
       )}
 
       {showMediaSender && (
         <ModalWrapper 
           title="Media Sender" 
           onClose={() => setShowMediaSender(false)} 
-        />
+        >
+          <MediaSender 
+            selectedChat={selectedChat} 
+            onClose={() => setShowMediaSender(false)} 
+          />
+        </ModalWrapper>
       )}
       
       {showDistributionList && (
         <ModalWrapper 
           title="Distribution Lists" 
           onClose={() => setShowDistributionList(false)} 
-        />
+        >
+          <DistributionListModal 
+            onClose={() => setShowDistributionList(false)} 
+          />
+        </ModalWrapper>
       )}
     </div>
   );

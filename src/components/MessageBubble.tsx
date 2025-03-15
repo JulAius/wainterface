@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { cn } from "@/lib/utils";
 import TransitionWrapper from './TransitionWrapper';
+import MessageContent from './MessageContent';
+import MessagePreview from './MessagePreview';
 
 interface MessageStatus {
   sent: boolean;
@@ -15,6 +17,8 @@ interface MessagePreviewProps {
   type: string;
   id: string;
   caption?: string;
+  mime_type?: string;
+  filename?: string;
 }
 
 interface MessageBubbleProps {
@@ -41,43 +45,6 @@ const StatusIndicator: React.FC<{ status: MessageStatus }> = ({ status }) => {
   return null;
 };
 
-const PreviewContent: React.FC<{ preview: MessagePreviewProps }> = ({ preview }) => {
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Simulate image loading
-  React.useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className="w-full h-40 bg-accent animate-pulse rounded-lg"></div>
-    );
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="rounded-lg overflow-hidden">
-        {preview.type.includes('image') ? (
-          <div className="bg-accent rounded-lg w-full h-40 flex items-center justify-center">
-            <div className="text-sm text-muted-foreground">Image Preview</div>
-          </div>
-        ) : preview.type.includes('video') ? (
-          <div className="bg-accent rounded-lg w-full h-40 flex items-center justify-center">
-            <div className="text-sm text-muted-foreground">Video Preview</div>
-          </div>
-        ) : (
-          <div className="bg-accent rounded-lg w-full py-6 flex items-center justify-center">
-            <div className="text-sm text-muted-foreground">File: {preview.id}</div>
-          </div>
-        )}
-      </div>
-      {preview.caption && <p className="text-sm">{preview.caption}</p>}
-    </div>
-  );
-};
-
 const MessageBubble: React.FC<MessageBubbleProps> = ({
   content,
   sender,
@@ -96,9 +63,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
       )}
     >
       {preview ? (
-        <PreviewContent preview={preview} />
+        <MessagePreview preview={preview} />
       ) : (
-        <p className="break-words text-sm leading-relaxed">{content}</p>
+        <MessageContent content={content} />
       )}
       
       <div className="flex items-center justify-end mt-1 space-x-1">
