@@ -28,10 +28,12 @@ const Index = () => {
     queryKey: ['health'],
     queryFn: getSystemHealth,
     retry: 3,
-    onError: () => {
-      toast.error('API connection error', {
-        description: 'Could not connect to the server. Please check your connection.',
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        toast.error('API connection error', {
+          description: 'Could not connect to the server. Please check your connection.',
+        });
+      }
     }
   });
 
@@ -49,10 +51,12 @@ const Index = () => {
         displayName: conv.phoneNumber || `+${conv.id}`,
         lastMessage: conv.lastMessage || 'No messages'
       })),
-    onError: () => {
-      toast.error('Error loading conversations', {
-        description: 'Failed to load conversations. Please try again later.',
-      });
+    onSettled: (data, error) => {
+      if (error) {
+        toast.error('Error loading conversations', {
+          description: 'Failed to load conversations. Please try again later.',
+        });
+      }
     }
   });
 
