@@ -77,11 +77,15 @@ const MessagePreview: React.FC<{ preview: PreviewProps | null }> = ({ preview })
   }
 
   // Pour les autres types de médias
-  const Icon = {
+  // Fix the TypeScript error by properly defining the icon mapping
+  const iconMap = {
     audio: Music,
     video: Video,
     document: FileText
-  }[preview.type as keyof typeof { audio: typeof Music, video: typeof Video, document: typeof FileText }] || FileText;
+  };
+  
+  // Use the type as a key to access the icon, with FileText as fallback
+  const Icon = iconMap[preview.type as keyof typeof iconMap] || FileText;
 
   return (
     <div className="flex flex-col gap-2">
