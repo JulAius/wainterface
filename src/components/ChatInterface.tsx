@@ -26,7 +26,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   
-  // Query for messages
+  // Query for messages using the proper API endpoint
   const { data: messages = [] } = useQuery({
     queryKey: ['messages', selectedChat?.id],
     queryFn: () => getMessages(selectedChat.id),
@@ -35,16 +35,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     select: (data) => data.map((msg: any) => ({
       ...msg,
       timestamp: new Date(msg.timestamp),
-      preview: msg.mediaId ? {
-        type: msg.type,
-        id: msg.mediaId,
-        caption: msg.caption,
-        mime_type: msg.mimeType
+      preview: msg.preview ? {
+        type: msg.preview.type,
+        id: msg.preview.id,
+        caption: msg.preview.caption,
+        mime_type: msg.preview.mime_type
       } : null
     }))
   });
 
-  // Send message mutation
+  // Send message mutation using the proper API endpoint
   const sendMessageMutation = useMutation({
     mutationFn: ({ userId, message }: { userId: string, message: string }) => sendMessage(userId, message),
     onMutate: async (newMessage) => {
@@ -71,17 +71,31 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       queryClient.setQueryData(['messages', selectedChat.id], context.previousMessages);
     },
     onSuccess: (data, variables, context: any) => {
+      // Update the temp message with the real message data
       queryClient.setQueryData(['messages', selectedChat.id], (old: any[] = []) => {
         return old.map(msg => 
           msg.messageId === context.tempMessage.messageId
-            ? { ...msg, ...data, messageId: data.messageId }
+            ? { 
+                ...msg, 
+                messageId: data.messageId || data.messageId,
+                status: { 
+                  sent: true, 
+                  delivered: false, 
+                  read: false, 
+                  failed: false, 
+                  timestamp: new Date() 
+                }
+              }
             : msg
         );
       });
+      
+      // Refresh the conversations list to reflect the new message
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
     }
   });
 
-  // Delete history mutation
+  // Delete history mutation using the proper API endpoint
   const deleteHistoryMutation = useMutation({
     mutationFn: deleteConversationHistory,
     onSuccess: () => {

@@ -1,15 +1,16 @@
 
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getConversations } from '../services/api';
+import { getConversations, getSystemHealth } from '../services/api';
 import ChatInterface from '../components/ChatInterface';
 import TransitionWrapper from '../components/TransitionWrapper';
 import Dashboard from '../components/Dashboard';
 import AppointmentsCalendar from '../components/AppointmentsCalendar';
 import ConversationList from '../components/ConversationList';
 import ModalWrapper from '../components/ModalWrapper';
+import { toast } from 'sonner';
 
-// Filter out this specific phone number
+// Filter out this specific phone number if needed
 const FILTERED_PHONE_NUMBER = "605370542649440";
 
 const Index = () => {
@@ -22,8 +23,20 @@ const Index = () => {
   const [showDashboard, setShowDashboard] = useState(false);
   const [showAppointmentsCalendar, setShowAppointmentsCalendar] = useState(false);
 
+  // Check API health
+  useQuery({
+    queryKey: ['health'],
+    queryFn: getSystemHealth,
+    retry: 3,
+    onError: () => {
+      toast.error('API connection error', {
+        description: 'Could not connect to the server. Please check your connection.',
+      });
+    }
+  });
+
   // Fetch conversations
-  const { data: conversations = [] } = useQuery({
+  const { data: conversations = [], isError } = useQuery({
     queryKey: ['conversations'],
     queryFn: getConversations,
     refetchInterval: 5000,
@@ -35,8 +48,20 @@ const Index = () => {
         messageCount: Number(conv.messageCount) || 0,
         displayName: conv.phoneNumber || `+${conv.id}`,
         lastMessage: conv.lastMessage || 'No messages'
-      }))
+      })),
+    onError: () => {
+      toast.error('Error loading conversations', {
+        description: 'Failed to load conversations. Please try again later.',
+      });
+    }
   });
+
+  // Display error toast if conversations couldn't be loaded
+  if (isError) {
+    toast.error('Error loading conversations', {
+      description: 'Failed to load conversations. Please try again later.',
+    });
+  }
 
   // Display Dashboard or Calendar when selected
   if (showDashboard) {
