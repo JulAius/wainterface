@@ -2,12 +2,12 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getConversations } from '../services/api';
-import Conversation from '../components/Conversation';
 import ChatInterface from '../components/ChatInterface';
-import SidebarHeader from '../components/SidebarHeader';
 import TransitionWrapper from '../components/TransitionWrapper';
 import Dashboard from '../components/Dashboard';
 import AppointmentsCalendar from '../components/AppointmentsCalendar';
+import ConversationList from '../components/ConversationList';
+import ModalWrapper from '../components/ModalWrapper';
 
 // Filter out this specific phone number
 const FILTERED_PHONE_NUMBER = "605370542649440";
@@ -38,19 +38,6 @@ const Index = () => {
       }))
   });
 
-  // Mock modal components that we'd implement in a real app
-  const ModalPlaceholder = ({ title, onClose }: { title: string, onClose: () => void }) => (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-xl p-6 max-w-md w-full shadow-xl">
-        <h2 className="text-xl font-medium mb-4">{title}</h2>
-        <p className="text-muted-foreground mb-6">This is a placeholder for the {title} component.</p>
-        <div className="flex justify-end">
-          <button className="primary-button" onClick={onClose}>Close</button>
-        </div>
-      </div>
-    </div>
-  );
-
   // Display Dashboard or Calendar when selected
   if (showDashboard) {
     return <Dashboard onClose={() => setShowDashboard(false)} />;
@@ -62,29 +49,16 @@ const Index = () => {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden">
-      {/* Sidebar */}
-      <TransitionWrapper animation="slide-right" className="w-80 h-full flex flex-col border-r border-border bg-card">
-        <SidebarHeader 
-          onNewConversation={() => setShowNewConversation(true)}
-          onShowDistributionList={() => setShowDistributionList(true)}
-          onShowDashboard={() => setShowDashboard(true)}
-          onShowCalendar={() => setShowAppointmentsCalendar(true)}
-        />
-        
-        <div className="overflow-y-auto flex-1 scrollbar-thin">
-          {conversations.map((conv: any) => (
-            <Conversation
-              key={conv.id}
-              id={conv.id}
-              lastActive={conv.lastActive}
-              messageCount={conv.messageCount}
-              isOnline={conv.isOnline}
-              isSelected={selectedChat?.id === conv.id}
-              onClick={() => setSelectedChat(conv)}
-            />
-          ))}
-        </div>
-      </TransitionWrapper>
+      {/* Sidebar with Conversations */}
+      <ConversationList 
+        conversations={conversations}
+        selectedChat={selectedChat}
+        onSelectChat={setSelectedChat}
+        onNewConversation={() => setShowNewConversation(true)}
+        onShowDistributionList={() => setShowDistributionList(true)}
+        onShowDashboard={() => setShowDashboard(true)}
+        onShowCalendar={() => setShowAppointmentsCalendar(true)}
+      />
 
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col h-full">
@@ -99,28 +73,28 @@ const Index = () => {
 
       {/* Modals */}
       {showTemplateSender && (
-        <ModalPlaceholder 
+        <ModalWrapper 
           title="Template Sender" 
           onClose={() => setShowTemplateSender(false)} 
         />
       )}
 
       {showNewConversation && (
-        <ModalPlaceholder 
+        <ModalWrapper 
           title="New Conversation" 
           onClose={() => setShowNewConversation(false)} 
         />
       )}
 
       {showMediaSender && (
-        <ModalPlaceholder 
+        <ModalWrapper 
           title="Media Sender" 
           onClose={() => setShowMediaSender(false)} 
         />
       )}
       
       {showDistributionList && (
-        <ModalPlaceholder 
+        <ModalWrapper 
           title="Distribution Lists" 
           onClose={() => setShowDistributionList(false)} 
         />
